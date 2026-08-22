@@ -334,3 +334,28 @@ body {
   white-space: pre-wrap;
   min-height: 1.2em;
 }
+
+.comparison-results:not(:empty) {
+  background: rgba(238, 228, 218, 0.5);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 4px 10px;
+  text-align: left;
+}
+
+.comparison-table thead tr {
+  border-bottom: 2px solid var(--board-bg);
+  font-weight: 700;
+}
