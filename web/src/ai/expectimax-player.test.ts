@@ -1,0 +1,64 @@
+import { describe, expect, it } from "vitest";
+import { getValidMoves } from "../game/move";
+import type { Board } from "../game/types";
+import { ExpectimaxPlayer } from "./expectimax-player";
+
+describe("ExpectimaxPlayer — SPEC.md #11.5", () => {
+  it("有効な手の中から選ぶ", async () => {
+    const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const player = new ExpectimaxPlayer(3);
+    const direction = await player.chooseMove(board);
+    expect(getValidMoves(board)).toContain(direction);
+  });
+
+  it("有効な手がない場合はエラーを投げる", async () => {
+    const board: Board = [
+      2, 4, 2, 4,
+      4, 2, 4, 2,
+      2, 4, 2, 4,
+      4, 2, 4, 2,
+    ];
+    const player = new ExpectimaxPlayer(3);
+    await expect(player.chooseMove(board)).rejects.toThrow();
+  });
+
+  it("同じ盤面・深度なら常に同じ結果になる（キャッシュとサンプリングの決定性）", () => {
+    const board: Board = [
+      8, 4, 2, 0,
+      4, 2, 0, 0,
+      2, 0, 0, 0,
+      0, 0, 0, 0,
+    ];
+    const player = new ExpectimaxPlayer(3);
+    const first = player.evaluateBoard(board);
+    const second = player.evaluateBoard(board);
+    expect(second.direction).toBe(first.direction);
+    expect(second.evaluation).toBeCloseTo(first.evaluation, 8);
+  });
+
+  it("探索統計 (nodes, elapsedMs) を返す", () => {
+    const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const player = new ExpectimaxPlayer(2);
+    const result = player.evaluateBoard(board);
+    expect(result.stats.nodes).toBeGreaterThan(0);
+    expect(result.stats.elapsedMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("明らかに良い手を選ぶ（マージして左上の角にタイルを寄せる）", async () => {
+    // LEFT: [4,0,0,0] (角に4、空きマス+1) / RIGHT: [0,0,0,4] (同じくマージするが角の重みが低い)
+    const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const player = new ExpectimaxPlayer(2);
+    const direction = await player.chooseMove(board);
+    expect(direction).toBe("left");
+  });
+
+  it("空きマスが多い盤面でも Chance Sampling により現実的な時間で完了する", () => {
+    const board: Board = [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4];
+    const player = new ExpectimaxPlayer(4);
+    const start = performance.now();
+    const result = player.evaluateBoard(board);
+    const elapsed = performance.now() - start;
+    expect(getValidMoves(board)).toContain(result.direction);
+    expect(elapsed).toBeLessThan(5000);
+  });
+});
