@@ -1,5 +1,7 @@
 import { runBenchmark } from "./ai/benchmark";
+import { runComparison } from "./ai/comparison";
 import { evaluateWithBreakdown } from "./ai/evaluator";
+import { AI_TYPES, type AiType } from "./ai/player-types";
 import { DEFAULT_DEPTH } from "./ai/expectimax-player";
 import { GreedyPlayer } from "./ai/greedy-player";
 import type { Player } from "./ai/player";
@@ -13,12 +15,11 @@ import type { Board, Direction, GameState } from "./game/types";
 import { NeuralPlayer } from "./model/neural-player";
 import { renderBoard, renderMessage, renderScore } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
-import { renderAiStats, renderBenchmarkResults, type AiStatsData } from "./ui/stats";
+import { renderAiStats, renderBenchmarkResults, renderComparisonResults, type AiStatsData } from "./ui/stats";
 import { AiWorkerClient } from "./worker/ai-worker-client";
 
 const MAX_BENCHMARK_GAMES = 200;
 
-type AiType = "random" | "greedy" | "expectimax" | "neural";
 type AutoPlaySpeed = "slow" | "normal" | "fast" | "maximum";
 
 const DEPTH_OPTIONS = [2, 3, 4, 5, 6] as const;
@@ -88,8 +89,10 @@ const TEMPLATE = `
         <input id="benchmark-games" type="number" min="1" max="${MAX_BENCHMARK_GAMES}" value="10" />
       </label>
       <button id="benchmark-button" type="button">Run Benchmark</button>
+      <button id="comparison-button" type="button">Compare All AIs</button>
     </div>
     <pre class="benchmark-results" id="benchmark-results"></pre>
+    <div class="comparison-results" id="comparison-results"></div>
     <div class="controls">
       <button id="reset-button" type="button">Reset</button>
     </div>
@@ -112,6 +115,8 @@ export class App {
   private readonly benchmarkGamesEl: HTMLInputElement;
   private readonly benchmarkButtonEl: HTMLButtonElement;
   private readonly benchmarkResultsEl: HTMLElement;
+  private readonly comparisonButtonEl: HTMLButtonElement;
+  private readonly comparisonResultsEl: HTMLElement;
 
   private aiType: AiType = "greedy";
   private depth: number = DEFAULT_DEPTH;
@@ -119,6 +124,7 @@ export class App {
   private autoPlayRunning = false;
   private autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
   private benchmarkRunning = false;
+  private comparisonRunning = false;
   /** Expectimax 用の Worker クライアント。使われるまで生成しない (SPEC.md #13) */
   private aiWorkerClient: AiWorkerClient | null = null;
 
@@ -138,6 +144,8 @@ export class App {
     this.benchmarkGamesEl = this.query<HTMLInputElement>("#benchmark-games");
     this.benchmarkButtonEl = this.query<HTMLButtonElement>("#benchmark-button");
     this.benchmarkResultsEl = this.query("#benchmark-results");
+    this.comparisonButtonEl = this.query<HTMLButtonElement>("#comparison-button");
+    this.comparisonResultsEl = this.query("#comparison-results");
 
     this.state = createInitialState(this.rng);
     this.render();
@@ -157,6 +165,7 @@ export class App {
       this.autoPlaySpeed = this.speedSelectEl.value as AutoPlaySpeed;
     });
     this.benchmarkButtonEl.addEventListener("click", () => this.runBenchmarkFromUi());
+    this.comparisonButtonEl.addEventListener("click", () => this.runComparisonFromUi());
   }
 
   private query<T extends HTMLElement = HTMLElement>(selector: string): T {
@@ -190,12 +199,12 @@ export class App {
   }
 
   /**
-   * ベンチマーク実行中の1ゲームごとに使う Player を作る。
+   * ベンチマーク/比較実行中の1ゲームごとに使う Player を作る。
    * メイン画面の Auto Play とは独立させるため、Expectimax の場合は
    * 呼び出し側が用意した専用の AiWorkerClient を使う。
    */
-  private createBenchmarkPlayer(workerClient: AiWorkerClient | null): Player {
-    switch (this.aiType) {
+  private createPlayerForAiType(aiType: AiType, workerClient: AiWorkerClient | null): Player {
+    switch (aiType) {
       case "random":
         return new RandomPlayer(createRandomRng());
       case "expectimax":
@@ -208,10 +217,11 @@ export class App {
     }
   }
 
-  /** ベンチマーク実行中とAuto Play実行中で互いの操作を無効化する (SPEC.md #14.4) */
+  /** ベンチマーク/比較実行中とAuto Play実行中で互いの操作を無効化する (SPEC.md #14.4) */
   private setBenchmarkControlsDisabled(disabled: boolean): void {
     this.benchmarkButtonEl.disabled = disabled;
     this.benchmarkGamesEl.disabled = disabled;
+    this.comparisonButtonEl.disabled = disabled;
   }
 
   private setGameplayControlsDisabled(disabled: boolean): void {
@@ -221,7 +231,7 @@ export class App {
 
   /** Web 版簡易ベンチマーク (SPEC.md #14.4, #42)。大量実行はローカルの Python 環境を推奨する */
   private async runBenchmarkFromUi(): Promise<void> {
-    if (this.benchmarkRunning || this.autoPlayRunning) return;
+    if (this.benchmarkRunning || this.comparisonRunning || this.autoPlayRunning) return;
 
     const games = Math.min(MAX_BENCHMARK_GAMES, Math.max(1, Math.floor(Number(this.benchmarkGamesEl.value)) || 1));
     this.benchmarkRunning = true;
@@ -235,7 +245,7 @@ export class App {
     try {
       const summary = await runBenchmark({
         games,
-        createPlayer: () => this.createBenchmarkPlayer(benchmarkWorkerClient),
+        createPlayer: () => this.createPlayerForAiType(this.aiType, benchmarkWorkerClient),
         onProgress: (completed, total) => {
           this.benchmarkResultsEl.textContent = `Running ${completed}/${total}...`;
         },
@@ -246,6 +256,38 @@ export class App {
     } finally {
       benchmarkWorkerClient?.terminate();
       this.benchmarkRunning = false;
+      this.setBenchmarkControlsDisabled(false);
+      this.setGameplayControlsDisabled(false);
+    }
+  }
+
+  /** Random / Greedy / Expectimax / Neural を同条件で比較する (SPEC.md #54, Phase 10) */
+  private async runComparisonFromUi(): Promise<void> {
+    if (this.benchmarkRunning || this.comparisonRunning || this.autoPlayRunning) return;
+
+    const games = Math.min(MAX_BENCHMARK_GAMES, Math.max(1, Math.floor(Number(this.benchmarkGamesEl.value)) || 1));
+    this.comparisonRunning = true;
+    this.setBenchmarkControlsDisabled(true);
+    this.setGameplayControlsDisabled(true);
+    this.comparisonResultsEl.textContent = "Running comparison...";
+
+    const comparisonWorkerClient = new AiWorkerClient();
+
+    try {
+      const entries = await runComparison({
+        aiTypes: AI_TYPES,
+        games,
+        createPlayer: (aiType) => this.createPlayerForAiType(aiType, comparisonWorkerClient),
+        onProgress: (aiType, completed, total) => {
+          this.comparisonResultsEl.textContent = `Running ${aiType}: ${completed}/${total}...`;
+        },
+      });
+      renderComparisonResults(this.comparisonResultsEl, entries);
+    } catch (error) {
+      this.comparisonResultsEl.textContent = `Comparison failed: ${error instanceof Error ? error.message : String(error)}`;
+    } finally {
+      comparisonWorkerClient.terminate();
+      this.comparisonRunning = false;
       this.setBenchmarkControlsDisabled(false);
       this.setGameplayControlsDisabled(false);
     }
@@ -320,7 +362,7 @@ export class App {
       clearTimeout(this.autoPlayTimer);
       this.autoPlayTimer = null;
     }
-    if (!this.benchmarkRunning) this.setBenchmarkControlsDisabled(false);
+    if (!this.benchmarkRunning && !this.comparisonRunning) this.setBenchmarkControlsDisabled(false);
     // Pause / Reset / New Game: 進行中の探索結果を無視する (SPEC.md #13.2)
     this.aiWorkerClient?.cancel();
   }

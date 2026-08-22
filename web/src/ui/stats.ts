@@ -1,5 +1,7 @@
 import type { BenchmarkSummary } from "../ai/benchmark";
+import type { ComparisonEntry } from "../ai/comparison";
 import type { EvaluationBreakdown } from "../ai/evaluator";
+import { AI_TYPE_LABELS } from "../ai/player-types";
 import type { Direction } from "../game/types";
 
 /** AI 情報表示に必要なデータ (SPEC.md #14.2) */
@@ -99,4 +101,47 @@ export function renderBenchmarkResults(container: HTMLElement, summary: Benchmar
     "Max Tile Distribution:",
     tileLines,
   ].join("\n");
+}
+
+function bestTileOf(summary: BenchmarkSummary): number {
+  const tiles = Object.keys(summary.tileDistribution).map(Number);
+  return tiles.length > 0 ? Math.max(...tiles) : 0;
+}
+
+/** 複数 AI の比較結果を表として表示する (SPEC.md #54, Phase 10) */
+export function renderComparisonResults(container: HTMLElement, entries: ComparisonEntry[]): void {
+  if (entries.length === 0) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const rows = entries
+    .map(({ aiType, version, summary }) => {
+      return `
+        <tr>
+          <td>${AI_TYPE_LABELS[aiType]}</td>
+          <td>${version}</td>
+          <td>${Math.round(summary.averageScore).toLocaleString()}</td>
+          <td>${summary.bestScore.toLocaleString()}</td>
+          <td>${summary.averageMoves.toFixed(1)}</td>
+          <td>${bestTileOf(summary).toLocaleString()}</td>
+        </tr>`;
+    })
+    .join("");
+
+  container.innerHTML = `
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>AI</th>
+          <th>Version</th>
+          <th>Avg Score</th>
+          <th>Best Score</th>
+          <th>Avg Moves</th>
+          <th>Best Tile</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }

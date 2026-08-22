@@ -301,14 +301,17 @@ AI がなぜその手を選んだかある程度見える。
 
 ### タスク
 
-- [ ] **AI Version 管理**
-  - 各 AI にバージョン文字列を持たせる（例: `expectimax-v1`, `neural-v1`、`SPEC.md #15.3`）
-- [ ] **比較 UI**
-  - 複数 AI を同時に自動プレイさせ、スコア・最大タイル・到達率などを並べて表示する
-- [ ] **比較結果の記録**
-  - ベンチマーク結果に AI Version を必ず記録する
-- [ ] **可視化**
-  - 平均スコア・到達率などを簡易グラフやテーブルで表示する
+- [x] **AI Version 管理** — `web/src/ai/ai-version.ts`
+  - `AI_VERSIONS`(`Record<AiType, string>`)で各 AI にバージョン文字列を持たせた（`random-v1` / `greedy-v1` / `expectimax-v1` / `neural-v1`、`SPEC.md #15.3, #61`）
+  - `AiType` を `web/src/ai/player-types.ts` に切り出し、`app.ts` / `ai-version.ts` / `comparison.ts` から循環参照なしで共有できるようにした
+- [x] **比較 UI** — `web/src/ai/comparison.ts`, `app.ts`
+  - `runComparison()` が既存の `runBenchmark()` を再利用し、指定した複数 AI を順番にベンチマークして結果を返す
+  - 「Compare All AIs」ボタン(`#comparison-button`)を追加。実行中は比較/ベンチマーク/Auto Play の各ボタンを相互に無効化し、進捗を `AI名: 完了数/総数` で表示する
+- [x] **比較結果の記録**
+  - `ComparisonEntry`(`{ aiType, version, summary }`)に `AI_VERSIONS` の値を必ず含めて返すようにした
+- [x] **可視化** — `web/src/ui/stats.ts` の `renderComparisonResults()`
+  - AI / Version / Avg Score / Best Score / Avg Moves / Best Tile を並べたテーブルで表示する
+  - ブラウザ実測（Depth 2, 3 games）: Random 524 < Neural 2,448 < Greedy 10,641 < Expectimax 17,856（平均スコア）
 
 ### 完了条件
 複数 AI を同一画面で比較できる。
