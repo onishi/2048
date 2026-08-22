@@ -137,21 +137,21 @@ Expectimax が 2048 を一定確率で作れる（`SPEC.md #20` の成功基準:
 
 ### タスク
 
-- [ ] **通信プロトコル** — `web/src/worker/protocol.ts`
+- [x] **通信プロトコル** — `web/src/worker/protocol.ts`
   - `AIRequest` / `AIResponse` を定義する（`SPEC.md #13.1`）
-- [ ] **Worker 本体** — `web/src/worker/ai-worker.ts`
+- [x] **Worker 本体** — `web/src/worker/ai-worker.ts`
   - `AIRequest` を受け取り、Phase 3 の Expectimax + Evaluator + Cache を実行して `AIResponse` を返す
-- [ ] **Worker クライアント（メインスレッド側）**
+- [x] **Worker クライアント（メインスレッド側）**
   - `Player` インターフェースを Worker 越しに実装するアダプタを用意する（例: `web/src/ai/worker-expectimax-player.ts`）
   - Worker の生成・破棄・メッセージング（`postMessage` / `onmessage`）をラップする
-- [ ] **AI キャンセル** — `SPEC.md #13.2`
+- [x] **AI キャンセル** — `SPEC.md #13.2`
   - 各リクエストに `requestId` を付与する
   - 最新リクエスト以外のレスポンスは破棄する
   - Reset / Pause / New Game 押下時に、必要であれば Worker を `terminate` して再生成する
-- [ ] **UI 連携**
+- [x] **UI 連携**
   - 探索中でも盤面操作・アニメーション・他の UI 操作がブロックされないことを手動確認する
   - Auto Play / AI Move を Worker 経由に切り替える
-- [ ] **テスト**
+- [x] **テスト**
   - Worker Test（`SPEC.md #18`）: `board` を送信 → Worker が探索 → 有効な `Direction` が返ることを確認する
   - キャンセル: 短時間に複数リクエストを送った場合、最新のレスポンスのみが UI に反映されることを確認する
 
