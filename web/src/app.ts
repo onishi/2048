@@ -2,7 +2,7 @@ import { runBenchmark } from "./ai/benchmark";
 import { runComparison } from "./ai/comparison";
 import { evaluateWithBreakdown } from "./ai/evaluator";
 import { AI_TYPES, type AiType } from "./ai/player-types";
-import { DEFAULT_DEPTH } from "./ai/expectimax-player";
+import { DEFAULT_DEPTH, DYNAMIC_DEPTH, type DepthSetting } from "./ai/expectimax-player";
 import { GreedyPlayer } from "./ai/greedy-player";
 import type { Player } from "./ai/player";
 import { RandomPlayer } from "./ai/random-player";
@@ -24,7 +24,7 @@ const FAST_MOVE_ANIMATION_DURATION_MS = 80;
 
 type AutoPlaySpeed = "slow" | "normal" | "fast" | "maximum";
 
-const DEPTH_OPTIONS = [2, 3, 4, 5, 6] as const;
+const DEPTH_OPTIONS = [DYNAMIC_DEPTH, 2, 3, 4, 5, 6] as const;
 
 /** SPEC.md #14.3: Auto Play 速度。値は手と手の間隔(ms) */
 const AUTO_PLAY_INTERVALS_MS: Record<AutoPlaySpeed, number> = {
@@ -67,7 +67,8 @@ const TEMPLATE = `
         Depth:
         <select id="depth-select">
           ${DEPTH_OPTIONS.map(
-            (depth) => `<option value="${depth}"${depth === DEFAULT_DEPTH ? " selected" : ""}>${depth}</option>`,
+            (depth) =>
+              `<option value="${depth}"${depth === DEFAULT_DEPTH ? " selected" : ""}>${depth === DYNAMIC_DEPTH ? "Auto (3–5)" : depth}</option>`,
           ).join("")}
         </select>
       </label>
@@ -121,7 +122,7 @@ export class App {
   private readonly comparisonResultsEl: HTMLElement;
 
   private aiType: AiType = "greedy";
-  private depth: number = DEFAULT_DEPTH;
+  private depth: DepthSetting = DEFAULT_DEPTH;
   private autoPlaySpeed: AutoPlaySpeed = "normal";
   private autoPlayRunning = false;
   private autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
@@ -161,7 +162,9 @@ export class App {
       this.clearAiStats();
     });
     this.depthSelectEl.addEventListener("change", () => {
-      this.depth = Number(this.depthSelectEl.value);
+      this.depth =
+        this.depthSelectEl.value === DYNAMIC_DEPTH ? DYNAMIC_DEPTH : Number(this.depthSelectEl.value);
+      this.clearAiStats();
     });
     this.speedSelectEl.addEventListener("change", () => {
       this.autoPlaySpeed = this.speedSelectEl.value as AutoPlaySpeed;
@@ -301,14 +304,14 @@ export class App {
    */
   private buildStatsData(
     board: Board,
-    result: { direction: Direction; evaluation: number; actionValues: Partial<Record<Direction, number>>; nodes: number; cacheHits: number; elapsedMs: number },
+    result: { direction: Direction; evaluation: number; actionValues: Partial<Record<Direction, number>>; depth: number; nodes: number; cacheHits: number; elapsedMs: number },
   ): AiStatsData {
     const resultingBoard = move(board, result.direction).board;
     return {
       direction: result.direction,
       evaluation: result.evaluation,
       actionValues: result.actionValues,
-      depth: this.depth,
+      depth: result.depth,
       nodes: result.nodes,
       cacheHits: result.cacheHits,
       elapsedMs: result.elapsedMs,

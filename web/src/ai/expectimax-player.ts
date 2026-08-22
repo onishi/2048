@@ -11,6 +11,20 @@ const TILE_4_PROBABILITY = 0.1;
 
 /** SPEC.md #11.6: デフォルトの探索深度 */
 export const DEFAULT_DEPTH = 4;
+export const DYNAMIC_DEPTH = "dynamic" as const;
+export type DepthSetting = number | typeof DYNAMIC_DEPTH;
+
+/** SPEC.md #11.6: 終盤ほど深く読む Dynamic Depth テーブル。 */
+export function getDynamicDepth(board: Board): number {
+  const emptyCells = getEmptyCells(board).length;
+  if (emptyCells >= 9) return 3;
+  if (emptyCells >= 5) return 4;
+  return 5;
+}
+
+export function resolveDepth(board: Board, setting: DepthSetting): number {
+  return setting === DYNAMIC_DEPTH ? getDynamicDepth(board) : setting;
+}
 
 /**
  * SPEC.md #11.7: Chance Sampling。

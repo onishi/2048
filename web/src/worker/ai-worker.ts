@@ -26,6 +26,7 @@ ctx.onmessage = (event) => {
     direction: result.direction,
     evaluation: result.evaluation,
     actionValues: result.actionValues,
+    depth: request.depth,
     nodes: result.stats.nodes,
     cacheHits: result.stats.cacheHits,
     elapsedMs: result.stats.elapsedMs,

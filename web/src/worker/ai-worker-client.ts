@@ -5,6 +5,7 @@ export interface AiWorkerResult {
   direction: Direction;
   evaluation: number;
   actionValues: Partial<Record<Direction, number>>;
+  depth: number;
   nodes: number;
   cacheHits: number;
   elapsedMs: number;
@@ -45,6 +46,7 @@ export class AiWorkerClient {
       direction: response.direction,
       evaluation: response.evaluation,
       actionValues: response.actionValues,
+      depth: response.depth,
       nodes: response.nodes,
       cacheHits: response.cacheHits,
       elapsedMs: response.elapsedMs,

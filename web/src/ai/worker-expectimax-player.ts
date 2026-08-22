@@ -1,6 +1,6 @@
 import type { Board, Direction } from "../game/types";
 import type { AiWorkerClient, AiWorkerResult } from "../worker/ai-worker-client";
-import { DEFAULT_DEPTH } from "./expectimax-player";
+import { DEFAULT_DEPTH, resolveDepth, type DepthSetting } from "./expectimax-player";
 import type { Player } from "./player";
 
 /**
@@ -11,7 +11,7 @@ import type { Player } from "./player";
 export class WorkerExpectimaxPlayer implements Player {
   constructor(
     private readonly client: AiWorkerClient,
-    private readonly depth: number = DEFAULT_DEPTH,
+    private readonly depth: DepthSetting = DEFAULT_DEPTH,
   ) {}
 
   async chooseMove(board: Board): Promise<Direction> {
@@ -21,6 +21,6 @@ export class WorkerExpectimaxPlayer implements Player {
 
   /** UI 側で Evaluation/Nodes/Time を表示する際に使う (SPEC.md #8.2) */
   evaluateBoard(board: Board): Promise<AiWorkerResult> {
-    return this.client.evaluateBoard(board, this.depth);
+    return this.client.evaluateBoard(board, resolveDepth(board, this.depth));
   }
 }

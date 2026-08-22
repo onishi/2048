@@ -1,7 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { getValidMoves } from "../game/move";
 import type { Board } from "../game/types";
-import { ExpectimaxPlayer } from "./expectimax-player";
+import { DYNAMIC_DEPTH, ExpectimaxPlayer, getDynamicDepth, resolveDepth } from "./expectimax-player";
+
+describe("Dynamic Depth — SPEC.md #11.6", () => {
+  it.each([
+    { emptyCells: 9, expectedDepth: 3 },
+    { emptyCells: 12, expectedDepth: 3 },
+    { emptyCells: 5, expectedDepth: 4 },
+    { emptyCells: 8, expectedDepth: 4 },
+    { emptyCells: 0, expectedDepth: 5 },
+    { emptyCells: 4, expectedDepth: 5 },
+  ])("空きマス $emptyCells 個なら深度 $expectedDepth", ({ emptyCells, expectedDepth }) => {
+    const board = new Array(16).fill(2) as Board;
+    board.fill(0, 0, emptyCells);
+    expect(getDynamicDepth(board)).toBe(expectedDepth);
+  });
+
+  it("固定深度を選んだ場合は盤面によらずその値を使う", () => {
+    const board = new Array(16).fill(0) as Board;
+    expect(resolveDepth(board, 6)).toBe(6);
+    expect(resolveDepth(board, DYNAMIC_DEPTH)).toBe(3);
+  });
+});
 
 describe("ExpectimaxPlayer — SPEC.md #11.5", () => {
   it("有効な手の中から選ぶ", async () => {

@@ -60,6 +60,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       direction: "left",
       evaluation: 123,
       actionValues: {},
+      depth: 3,
       nodes: 456,
       cacheHits: 0,
       elapsedMs: 12.3,
@@ -67,6 +68,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
 
     const result = await promise;
     expect(result.direction).toBe("left");
+    expect(result.depth).toBe(3);
     expect(result.nodes).toBe(456);
   });
 
@@ -86,6 +88,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       direction: "up",
       evaluation: 1,
       actionValues: {},
+      depth: 3,
       nodes: 1,
       cacheHits: 0,
       elapsedMs: 1,
@@ -96,6 +99,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       direction: "right",
       evaluation: 2,
       actionValues: {},
+      depth: 3,
       nodes: 2,
       cacheHits: 0,
       elapsedMs: 2,
@@ -135,6 +139,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       direction: "down",
       evaluation: 9,
       actionValues: {},
+      depth: 4,
       nodes: 9,
       cacheHits: 0,
       elapsedMs: 9,
