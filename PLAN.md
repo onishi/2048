@@ -166,21 +166,24 @@ AI 探索中も UI 操作やアニメーションが停止しない。
 
 ### タスク
 
-- [ ] **Wrangler 設定**
+- [x] **Wrangler 設定**
   - `wrangler.jsonc` を作成し、Static Assets 配信を設定する（`SPEC.md #5`）
   - D1 / R2 はこの時点では使用しない
-- [ ] **ビルド確認**
+- [x] **ビルド確認**
   - `vite build` の出力を Cloudflare Static Assets が期待する形に配置する
 - [ ] **デプロイフロー**
-  - `wrangler deploy`（または CI からのデプロイ）で公開できることを確認する
+  - `wrangler dev` によるローカルでの Cloudflare 実行環境エミュレーションでは、Static Assets 配信・Web Worker (Expectimax) とも正常動作を確認済み
+  - `wrangler deploy` による実際の公開は **未実施**（Cloudflare アカウントの認証情報がこの環境にないため）。ユーザー側で `npx wrangler login` の上 `npm run deploy` を実行するか、`CLOUDFLARE_API_TOKEN` を渡してもらう必要がある
   - 可能であれば GitHub Actions 等での自動デプロイを検討する（必須ではない）
 - [ ] **本番スモークテスト**
   - 公開 URL 上で Play / AI Move / Auto Play が問題なく動作することを確認する（`SPEC.md #14.5` の対応ブラウザを一通り確認）
-- [ ] **README 更新**
+  - デプロイフローが未実施のため未着手
+- [x] **README 更新**
   - セットアップ手順・デプロイ手順を `README.md` に記載する
 
 ### 完了条件
 公開 URL から 2048 AI を利用できる。
+**未達成**: ビルド・Wrangler 設定・ローカルでの Cloudflare 実行環境エミュレーションまでは完了しているが、実際の公開デプロイには Cloudflare アカウントの認証情報が必要なため保留中。
 
 ---
 

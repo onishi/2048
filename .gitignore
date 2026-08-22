@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.local
 .DS_Store
+.wrangler/
 
 # Python (research/)
 __pycache__/
