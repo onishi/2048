@@ -13,12 +13,14 @@ import { move } from "./game/move";
 import { createRandomRng } from "./game/rng";
 import type { Board, Direction, GameState } from "./game/types";
 import { NeuralPlayer } from "./model/neural-player";
-import { renderBoard, renderMessage, renderScore } from "./ui/board-view";
+import { renderBoard, renderMessage, renderScore, type BoardAnimation } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
 import { renderAiStats, renderBenchmarkResults, renderComparisonResults, type AiStatsData } from "./ui/stats";
 import { AiWorkerClient } from "./worker/ai-worker-client";
 
 const MAX_BENCHMARK_GAMES = 200;
+const MOVE_ANIMATION_DURATION_MS = 140;
+const FAST_MOVE_ANIMATION_DURATION_MS = 80;
 
 type AutoPlaySpeed = "slow" | "normal" | "fast" | "maximum";
 
@@ -315,8 +317,7 @@ export class App {
   }
 
   private handleMove(direction: Direction): void {
-    this.state = applyMove(this.state, direction, this.rng);
-    this.render();
+    this.applyDirection(direction, MOVE_ANIMATION_DURATION_MS);
   }
 
   private async handleAiMove(): Promise<void> {
@@ -389,8 +390,13 @@ export class App {
       .then((direction) => {
         // Pause 中に届いた古い結果は無視する (SPEC.md #13.2)
         if (!this.autoPlayRunning) return;
-        this.state = applyMove(this.state, direction, this.rng);
-        this.render();
+        const animationDurationMs =
+          this.autoPlaySpeed === "maximum"
+            ? null
+            : this.autoPlaySpeed === "fast"
+              ? FAST_MOVE_ANIMATION_DURATION_MS
+              : MOVE_ANIMATION_DURATION_MS;
+        this.applyDirection(direction, animationDurationMs);
         const intervalMs = AUTO_PLAY_INTERVALS_MS[this.autoPlaySpeed];
         this.autoPlayTimer = setTimeout(() => this.runAutoPlayStep(), intervalMs);
       })
@@ -405,8 +411,25 @@ export class App {
     this.render();
   }
 
-  private render(): void {
-    renderBoard(this.boardEl, this.state.board);
+  private applyDirection(direction: Direction, animationDurationMs: number | null): void {
+    const previousState = this.state;
+    const nextState = applyMove(previousState, direction, this.rng);
+    if (nextState === previousState) return;
+
+    this.state = nextState;
+    const animation: BoardAnimation | undefined =
+      animationDurationMs === null
+        ? undefined
+        : {
+            previousBoard: previousState.board,
+            direction,
+            durationMs: animationDurationMs,
+          };
+    this.render(animation);
+  }
+
+  private render(animation?: BoardAnimation): void {
+    renderBoard(this.boardEl, this.state.board, animation);
     renderScore(this.scoreEl, this.maxTileEl, this.state);
     renderMessage(this.messageEl, this.state.gameOver);
   }

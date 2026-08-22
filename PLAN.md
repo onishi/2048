@@ -201,7 +201,7 @@ AI 探索中も UI 操作やアニメーションが停止しない。
   - `evaluate()` を、合計値だけでなく各項目（empty / monotonicity / smoothness / merge / corner / snake）のスコア内訳も返せるように拡張する
   - UI 上で内訳を確認できるようにする
 - [x] **Auto Play 速度設定**
-  - Slow / Normal / Fast / Maximum を実装する（`SPEC.md #14.3`）。現状 UI にタイル移動アニメーション自体がない（即時再描画）ため、Maximum での「アニメーション省略」は該当なし
+  - Slow / Normal / Fast / Maximum を実装する（`SPEC.md #14.3`）。タイルの移動・結合・新規生成をアニメーションし、Maximum ではアニメーションを省略する
 - [x] **Web 版簡易 Benchmark**
   - 「Run N Games」の簡易ベンチマーク UI を実装した(`SPEC.md #14.4`)。大量実行はローカル Python 環境(Phase 7)を推奨する旨をコード内コメントに記載
 
