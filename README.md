@@ -90,3 +90,24 @@ python scripts/generate_dataset.py --games 100 --depth 3  # 教師データ生�
 性能上の注意: 現状は TypeScript 版と同一の純粋な Python 実装であり、V8 の JIT のような
 最適化がないため Expectimax は depth を上げると大幅に遅くなる。手早く試す場合は
 `--depth 2〜3` から始めることを推奨する。
+
+### Neural AI（Phase 8: 学習 / ONNX変換）
+
+Expectimax を教師にした模倣学習と ONNX への変換を行う。追加で `torch` / `onnx` /
+`onnxruntime` が必要なため、`ml` extra を別途インストールする。
+
+```bash
+uv pip install -e ".[dev,ml]"
+
+python scripts/generate_dataset.py --games 1000 --depth 3 --output dataset.jsonl
+python scripts/train.py --dataset dataset.jsonl --epochs 20 --output model.pt
+python scripts/export_onnx.py --model model.pt --output model.onnx
+
+# 学習済みモデルで自己対局し、他の AI とスコアを比較する
+python scripts/benchmark.py --games 20 --ai neural --model-path model.pt
+```
+
+`pip install torch` は環境によっては CUDA ランタイム込みの巨大な wheel を要求することがある。
+CPU 専用の軽量な wheel が必要な場合は
+[pytorch.org の案内](https://pytorch.org/get-started/locally/) に従って
+`--index-url https://download.pytorch.org/whl/cpu` を使うこと。

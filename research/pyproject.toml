@@ -7,6 +7,11 @@ dependencies = ["numpy>=1.26"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# Phase 8 (Neural AI) 用。torch は環境によっては素の `pip install torch` で
+# CUDA ランタイム込みの巨大な wheel が入ってしまう場合がある。CPU 専用の
+# 軽量な wheel が必要な場合は https://pytorch.org/get-started/locally/ の
+# 案内に従って `--index-url https://download.pytorch.org/whl/cpu` を使うこと。
+ml = ["torch>=2.0", "onnx>=1.15", "onnxruntime>=1.17"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

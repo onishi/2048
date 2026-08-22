@@ -35,7 +35,20 @@ class GameResult:
     total_move_time_ms: float
 
 
-def run_game(ai: str, depth: int, seed: int) -> GameResult:
+def _create_neural_player(model_path: str):
+    # torch は Phase 8 (Neural AI) でのみ必要な重い依存関係のため、
+    # --ai neural を使う場合だけ遅延 import する (SPEC.md #6.2 の ml extra)。
+    import torch
+
+    from game2048.model import Game2048Net
+    from game2048.neural_player import NeuralPlayer
+
+    model = Game2048Net()
+    model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+    return NeuralPlayer(model)
+
+
+def run_game(ai: str, depth: int, seed: int, model_path: str | None = None) -> GameResult:
     rng = Rng(seed)
     state = create_initial_state(rng)
 
@@ -43,6 +56,10 @@ def run_game(ai: str, depth: int, seed: int) -> GameResult:
         player = ExpectimaxPlayer(depth=depth)
     elif ai == "greedy":
         player = GreedyPlayer()
+    elif ai == "neural":
+        if not model_path:
+            raise ValueError("--ai neural には --model-path が必要です")
+        player = _create_neural_player(model_path)
     else:
         player = RandomPlayer(rng)
 
@@ -81,8 +98,9 @@ def main() -> None:
     parser.add_argument("--games", type=int, default=100, help="実行するゲーム数")
     parser.add_argument("--depth", type=int, default=DEFAULT_DEPTH, help="Expectimax の探索深度")
     parser.add_argument(
-        "--ai", choices=["expectimax", "greedy", "random"], default="expectimax", help="使用する AI"
+        "--ai", choices=["expectimax", "greedy", "random", "neural"], default="expectimax", help="使用する AI"
     )
+    parser.add_argument("--model-path", help="--ai neural の場合に読み込む train.py の出力 (.pt)")
     parser.add_argument("--seed", type=int, default=1, help="1ゲーム目の乱数 seed。以降 +1 ずつ変える")
     args = parser.parse_args()
 
@@ -90,7 +108,7 @@ def main() -> None:
     start_time = time.perf_counter()
 
     for i in range(args.games):
-        result = run_game(args.ai, args.depth, args.seed + i)
+        result = run_game(args.ai, args.depth, args.seed + i, args.model_path)
         results.append(result)
         print(
             f"game {i + 1}/{args.games}: score={result.score} maxTile={result.max_tile} "
