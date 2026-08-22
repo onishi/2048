@@ -81,24 +81,27 @@ const TEMPLATE = `
           <option value="maximum">Maximum</option>
         </select>
       </label>
+    </div>
+    <div class="action-bar">
       <button id="ai-move-button" type="button">AI Move</button>
       <button id="auto-play-button" type="button">Start AI</button>
+      <button id="reset-button" class="secondary" type="button">Reset</button>
     </div>
     <p class="ai-suggestion" id="ai-suggestion"></p>
     <div class="ai-stats" id="ai-stats"></div>
-    <div class="benchmark-bar">
-      <label class="ai-select-label">
-        Games:
-        <input id="benchmark-games" type="number" min="1" max="${MAX_BENCHMARK_GAMES}" value="10" />
-      </label>
-      <button id="benchmark-button" type="button">Run Benchmark</button>
-      <button id="comparison-button" type="button">Compare All AIs</button>
-    </div>
-    <pre class="benchmark-results" id="benchmark-results"></pre>
-    <div class="comparison-results" id="comparison-results"></div>
-    <div class="controls">
-      <button id="reset-button" type="button">Reset</button>
-    </div>
+    <details class="advanced">
+      <summary>Benchmark / Compare AIs</summary>
+      <div class="benchmark-bar">
+        <label class="ai-select-label">
+          Games:
+          <input id="benchmark-games" type="number" min="1" max="${MAX_BENCHMARK_GAMES}" value="10" />
+        </label>
+        <button id="benchmark-button" type="button">Run Benchmark</button>
+        <button id="comparison-button" type="button">Compare All AIs</button>
+      </div>
+      <pre class="benchmark-results" id="benchmark-results"></pre>
+      <div class="comparison-results" id="comparison-results"></div>
+    </details>
   </div>
 `;
 

@@ -11,6 +11,10 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -19,6 +23,7 @@ body {
   justify-content: center;
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -216,13 +221,18 @@ body {
   color: var(--text);
 }
 
-.controls {
+.action-bar {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.action-bar button {
+  flex: 1 1 96px;
 }
 
 .ai-bar button,
-.controls button {
+.action-bar button {
   background: var(--board-bg);
   color: white;
   border: none;
@@ -233,8 +243,14 @@ body {
   cursor: pointer;
 }
 
+.action-bar button.secondary {
+  background: transparent;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--board-bg);
+}
+
 .ai-bar button:hover,
-.controls button:hover {
+.action-bar button:hover {
   filter: brightness(1.1);
 }
 
@@ -353,9 +369,31 @@ body {
   padding: 2px 6px;
 }
 
+.advanced {
+  background: rgba(238, 228, 218, 0.5);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.advanced[open] summary {
+  margin-bottom: 10px;
+}
+
+.advanced .benchmark-results,
+.advanced .comparison-results:not(:empty) {
+  margin-top: 8px;
+}
+
 .benchmark-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -383,7 +421,7 @@ body {
 }
 
 .benchmark-bar button:disabled,
-.ai-bar button:disabled {
+.action-bar button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -421,4 +459,47 @@ body {
 .comparison-table thead tr {
   border-bottom: 2px solid var(--board-bg);
   font-weight: 700;
+}
+
+@media (max-width: 480px), (max-height: 700px) {
+  body {
+    align-items: flex-start;
+  }
+
+  .game {
+    width: 100vw;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .game-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .score-box {
+    min-width: 52px;
+    padding: 4px 10px;
+  }
+
+  .ai-bar {
+    gap: 6px;
+  }
+
+  .ai-select-label {
+    flex: 1 1 auto;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+
+  .ai-select-label select,
+  .benchmark-bar input[type="number"] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .action-bar button {
+    flex: 1 1 30%;
+    padding: 10px 6px;
+    font-size: 0.85rem;
+  }
 }
