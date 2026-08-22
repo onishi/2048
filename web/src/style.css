@@ -159,11 +159,41 @@ body {
   font-size: clamp(0.7rem, 4vw, 1.2rem);
 }
 
+.ai-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-select-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.ai-select-label select {
+  border-radius: 6px;
+  border: 1px solid var(--board-bg);
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+.ai-suggestion {
+  min-height: 1.2em;
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+}
+
 .controls {
   display: flex;
   justify-content: flex-end;
 }
 
+.ai-bar button,
 .controls button {
   background: var(--board-bg);
   color: white;
@@ -175,6 +205,7 @@ body {
   cursor: pointer;
 }
 
+.ai-bar button:hover,
 .controls button:hover {
   filter: brightness(1.1);
 }

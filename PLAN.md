@@ -73,21 +73,21 @@
 
 ### タスク
 
-- [ ] **Player インターフェース** — `web/src/ai/player.ts`
+- [x] **Player インターフェース** — `web/src/ai/player.ts`
   - `interface Player { chooseMove(board: Board): Promise<Direction> }`（`SPEC.md #11.1`）
-- [ ] **Random AI** — `web/src/ai/random-player.ts`（`SPEC.md #11.3`）
-- [ ] **評価関数** — `web/src/ai/evaluator.ts`, `web/src/ai/weights.ts`
+- [x] **Random AI** — `web/src/ai/random-player.ts`（`SPEC.md #11.3`）
+- [x] **評価関数** — `web/src/ai/evaluator.ts`, `web/src/ai/weights.ts`
   - `SPEC.md #12` の各項目を個別関数として実装する: `emptyScore`, `monotonicityScore`, `smoothnessPenalty`, `mergePotentialScore`, `cornerBonus`, `snakeScore`
   - `evaluate(board, weights)` で `SPEC.md #12.1` の符号規約（Smoothness のみ減算）に従って合成する
   - `DEFAULT_WEIGHTS`（`SPEC.md #12.8`）を初期値として設定する
   - 各評価項目について、既知の盤面に対する期待値を用いた単体テストを書く
-- [ ] **Greedy AI** — `web/src/ai/greedy-player.ts`
+- [x] **Greedy AI** — `web/src/ai/greedy-player.ts`
   - 1手先の `getValidMoves` を評価し、最大評価値の手を返す（`SPEC.md #11.4`）
-- [ ] **UI 統合**
+- [x] **UI 統合**
   - AI 選択 UI（Random / Greedy の切り替え）
   - 「AI Move」ボタン: 現在の盤面に対する提案手を1つ表示する（`SPEC.md #8.2` の表示イメージ）
   - Auto Play の骨組み（Start / Pause / Reset）。この時点ではメインスレッドで実行してよい（Worker 化は Phase 4）
-- [ ] **テスト**
+- [x] **テスト**
   - Random AI が常に有効な手のみ選ぶことを確認するテスト
   - Greedy AI が単純な局面で「明らかに良い手」を選ぶことを確認するテスト
 
