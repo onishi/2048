@@ -33,32 +33,32 @@
 
 ### タスク
 
-- [ ] **プロジェクト初期化**
+- [x] **プロジェクト初期化**
   - `package.json` / `tsconfig.json` / `vite.config.ts` / Vitest 設定を作成する（`SPEC.md #6.1`）
   - `web/` 配下のディレクトリ構成を `SPEC.md #7` の通りに用意する
-- [ ] **型定義** — `web/src/game/types.ts`
+- [x] **型定義** — `web/src/game/types.ts`
   - `Board`, `Direction`, `GameState`, `MoveResult` を定義する（`SPEC.md #9`）
-- [ ] **乱数生成器** — `web/src/game/rng.ts`
+- [x] **乱数生成器** — `web/src/game/rng.ts`
   - seed 可能な `Rng` インターフェースと実装（例: mulberry32 等の軽量 PRNG）を用意する（`SPEC.md #10.4`）。Phase 1 の時点ではゲーム内で使うのみだが、後の Replay 機能（`SPEC.md #15.1`）のために最初から `Rng` を経由してタイル生成する設計にしておく
-- [ ] **盤面ユーティリティ** — `web/src/game/board.ts`
+- [x] **盤面ユーティリティ** — `web/src/game/board.ts`
   - `getEmptyCells`, `getMaxTile`, 盤面の clone / serialize ヘルパーを実装する
-- [ ] **移動・マージロジック** — `web/src/game/move.ts`
+- [x] **移動・マージロジック** — `web/src/game/move.ts`
   - `move(board, direction): MoveResult` を実装する（`SPEC.md #10.2`）
   - 実装方針: 4 方向すべてを個別実装せず、盤面の回転・転置を用いて「LEFT への move」1 種類に帰着させると実装・テストが単純になる
   - No Double Merge（同ターン内で生成されたタイルは再結合しない）を必ず守る
-- [ ] **ゲーム進行** — `web/src/game/game.ts`
+- [x] **ゲーム進行** — `web/src/game/game.ts`
   - `spawnRandomTile(board, rng)`, `getValidMoves(board)`, `isGameOver(board)` を実装する
   - `GameState` の初期化・`move` 適用・スコア加算・`moveCount` 更新をまとめた `applyMove(state, direction, rng)` 相当の関数を用意する
-- [ ] **ゲームロジックのテスト**
+- [x] **ゲームロジックのテスト**
   - `SPEC.md #10.3` の全テストケース（基本マージ／2組同時マージ／異なる値の2組同時マージ／No Double Merge）を実装する
   - `SPEC.md #10.5` の Game Over 判定テストを実装する
   - ランダムタイル生成の 2:4 = 90%:10% 比率を、大量試行の統計テストで確認する
-- [ ] **UI（最小限）**
+- [x] **UI（最小限）**
   - `web/index.html`, `web/src/main.ts`, `web/src/app.ts`
   - `web/src/ui/board-view.ts`: 盤面描画（グリッド、タイル色分け、スコア表示）
   - `web/src/ui/controls.ts`: キーボード操作（矢印キー）とスワイプ操作（タッチイベント）
   - 最低限の CSS（レイアウト崩れがない程度）
-- [ ] **手動確認**
+- [x] **手動確認**
   - `npm run dev` で起動し、キーボードとスワイプ両方で問題なくプレイできることを確認する
   - Game Over 表示、Reset 動作を確認する
 
