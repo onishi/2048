@@ -35,7 +35,9 @@ npm run build
 
 ## Cloudflare へのデプロイ
 
-本プロジェクトは Cloudflare Workers の Static Assets 機能を使い、`dist/` を静的配信する（`wrangler.jsonc`）。サーバーサイドの Worker スクリプトは持たない。
+本プロジェクトは Cloudflare Workers の Static Assets 機能を使い、`dist/` を静的配信する（`wrangler.jsonc`）。公開 URL は <https://2048.wagaya.org/>。
+
+Worker スクリプトは、旧 URL `https://2048-ai.wagaya.workers.dev/` へのアクセスをパスとクエリを保ったまま公開 URL へ恒久リダイレクトし、それ以外のリクエストを Static Assets へ渡す。
 
 1. Cloudflare アカウントにログインする（初回のみ）
 
@@ -49,7 +51,7 @@ npm run build
    npm run deploy
    ```
 
-デプロイ後に表示される URL でアプリにアクセスできる。
+デプロイすると `2048.wagaya.org` の Custom Domain と DNS が Cloudflare により管理される。
 
 ### GitHub Actions による自動デプロイ
 

@@ -35,6 +35,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Generate Worker types
+        run: npm run types
+
       - name: Run type check
         run: npm run typecheck
 

@@ -173,7 +173,8 @@ AI 探索中も UI 操作やアニメーションが停止しない。
   - `vite build` の出力を Cloudflare Static Assets が期待する形に配置する
 - [x] **デプロイフロー**
   - `wrangler dev` によるローカルでの Cloudflare 実行環境エミュレーションでは、Static Assets 配信・Web Worker (Expectimax) とも正常動作を確認済み
-  - 2026-08-22 に `wrangler deploy` で Cloudflare Workers Static Assets へ公開済み（https://2048-ai.wagaya.workers.dev）
+  - 2026-08-22 に `wrangler deploy` で Cloudflare Workers Static Assets へ公開済み（https://2048.wagaya.org）
+  - `2048.wagaya.org` を Custom Domain に設定し、旧 `workers.dev` URL はパスとクエリを保持して新 URL へ恒久リダイレクトする
   - `.github/workflows/deploy.yml` を追加し、`main` への push 時にテスト・型チェック・ビルド成功後、GitHub Actions から自動デプロイする
 - [ ] **本番スモークテスト**
   - 公開 URL 上で Play / AI Move / Auto Play が問題なく動作することを確認する（`SPEC.md #14.5` の対応ブラウザを一通り確認）
@@ -183,7 +184,7 @@ AI 探索中も UI 操作やアニメーションが停止しない。
 
 ### 完了条件
 公開 URL から 2048 AI を利用できる。
-**達成**: 2026-08-22 に https://2048-ai.wagaya.workers.dev へ公開済み。本番環境での実ブラウザ操作と対応ブラウザ一式のスモークテストは引き続き必要。
+**達成**: 2026-08-22 に https://2048.wagaya.org へ公開済み。本番環境での実ブラウザ操作と対応ブラウザ一式のスモークテストは引き続き必要。
 
 ---
 

@@ -14,7 +14,7 @@ export default defineConfig({
   },
   test: {
     root: ".",
-    include: ["web/src/**/*.test.ts"],
+    include: ["web/src/**/*.test.ts", "worker/**/*.test.ts"],
     environment: "jsdom",
   },
 });
