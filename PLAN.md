@@ -216,25 +216,26 @@ AI がなぜその手を選んだかある程度見える。
 
 ### タスク
 
-- [ ] **プロジェクト初期化**
+- [x] **プロジェクト初期化**
   - `research/pyproject.toml`、pytest 設定を用意する（`SPEC.md #6.2`）
-- [ ] **ゲームロジック移植** — `research/src/game2048/board.py`
+- [x] **ゲームロジック移植** — `research/src/game2048/board.py`
   - Phase 1 の TypeScript ロジック（move / merge / spawn / game over）を Python で再実装する
   - TypeScript 版と Python 版で同一の入力に対し同一の出力になることを、共有テストケース（`SPEC.md #10.3` 等）で相互に検証する
-- [ ] **評価関数移植** — `research/src/game2048/evaluator.py`
+- [x] **評価関数移植** — `research/src/game2048/evaluator.py`
   - `SPEC.md #12` の評価関数を Python で再実装する
-- [ ] **Expectimax 移植** — `research/src/game2048/expectimax.py`
+- [x] **Expectimax 移植** — `research/src/game2048/expectimax.py`
   - Phase 3 のロジックと同一のアルゴリズム（depth 消費の定義を含む）を移植する
-- [ ] **ベンチマークスクリプト** — `research/scripts/benchmark.py`
+- [x] **ベンチマークスクリプト** — `research/scripts/benchmark.py`
   - `SPEC.md #16.1` の CLI 引数（`--games`, `--depth`）と出力フォーマット（Average/Median/Best Score、512〜8192 到達率等）を実装する
   - 記録指標一式（score, move_count, max_tile, 到達率, average move time, total game time, nodes searched, cache hit rate）を出力する
-- [ ] **パラメータ探索**
-  - 評価関数の重みを変えながら 100 ゲーム単位で実行し比較する仕組みを作る（`SPEC.md #16.2`）。初期実装は Random Search で十分
-- [ ] **Dataset 生成スクリプト** — `research/scripts/generate_dataset.py`
-  - Expectimax を教師として `SPEC.md #16.3` の JSON 形式でデータを保存する
-- [ ] **テスト** — `research/tests/`
-  - Python 版ゲームロジック・評価関数の単体テスト
-  - 可能であれば TypeScript 版との出力比較テスト（同一 seed・同一手順での盤面一致確認）
+  - 実測: Python は V8 の JIT がない分 Expectimax が低速（depth 2 で 1 ゲーム十数秒〜）。スクリプト冒頭にその旨と `--depth 2〜3` 推奨を明記した
+- [x] **パラメータ探索** — `research/scripts/param_search.py`
+  - 評価関数の重みを変えながら実行し比較する仕組みを作った（`SPEC.md #16.2`）。Random Search、デフォルトは高速な Greedy AI で評価し `--ai expectimax` でも切り替え可能
+- [x] **Dataset 生成スクリプト** — `research/scripts/generate_dataset.py`
+  - Expectimax を教師として `SPEC.md #16.3` のレコード形式(board/bestAction/values)で JSON Lines 出力する
+- [x] **テスト** — `research/tests/`
+  - Python 版ゲームロジック・評価関数・Expectimax・Random/Greedy・スクリプトの単体テスト(50件)
+  - TypeScript 版を node で実行した結果を `tests/fixtures/` に固定し、Python 版の出力と完全一致することを確認する回帰テスト(rng/game/evaluator/expectimaxの4種)
 
 ### 完了条件
 ローカルで大量ベンチマークとデータ生成ができる。
