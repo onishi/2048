@@ -65,4 +65,28 @@ web/src/
 ├── ai/      # AI（Random / Greedy / Expectimax、評価関数）
 ├── worker/  # Expectimax を実行する Web Worker とその通信
 └── ui/      # 盤面描画・キーボード/スワイプ操作
+
+research/    # Python 研究環境（Benchmark / パラメータ探索 / 教師データ生成）
 ```
+
+## Python 研究環境 (research/)
+
+大量ベンチマークやパラメータ探索、教師データ生成をローカルで行うための Python 環境。
+ゲームロジック・評価関数・Expectimax は Web 版と完全に同じ挙動になるよう移植しており、
+`research/tests/fixtures/` の TypeScript 版の実行結果と突き合わせるテストで担保している。
+
+```bash
+cd research
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+
+pytest                                              # テスト
+python scripts/benchmark.py --games 100 --depth 3   # ベンチマーク
+python scripts/param_search.py --trials 20 --games 20  # 評価関数の重み探索
+python scripts/generate_dataset.py --games 100 --depth 3  # 教師データ生成 (JSON Lines)
+```
+
+性能上の注意: 現状は TypeScript 版と同一の純粋な Python 実装であり、V8 の JIT のような
+最適化がないため Expectimax は depth を上げると大幅に遅くなる。手早く試す場合は
+`--depth 2〜3` から始めることを推奨する。
