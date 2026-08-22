@@ -111,3 +111,16 @@ python scripts/benchmark.py --games 20 --ai neural --model-path model.pt
 CPU 専用の軽量な wheel が必要な場合は
 [pytorch.org の案内](https://pytorch.org/get-started/locally/) に従って
 `--index-url https://download.pytorch.org/whl/cpu` を使うこと。
+
+### Browser Neural AI（Phase 9）
+
+`web/public/models/2048-ai.onnx` に配置したモデルは、ブラウザ上で
+[ONNX Runtime Web](https://github.com/microsoft/onnxruntime) を使って推論する
+(`web/src/model/neural-player.ts`)。AI選択で「Neural」を選ぶと、探索を行わず
+1回の推論だけで次の手を決める。モデルを再学習した場合は `export_onnx.py` の
+出力をこのパスに上書きすれば反映される。
+
+同梱のモデルは `research/scripts/generate_dataset.py --games 40 --depth 2` 程度の
+小規模なデータセットで学習したデモ用途のもので、精度は高くない。まともな強さの
+モデルにするには、`SPEC.md #16.3` が想定するような大規模なデータセット
+(数百万局面規模)で学習し直す必要がある。

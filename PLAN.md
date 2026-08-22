@@ -275,18 +275,20 @@ AI がなぜその手を選んだかある程度見える。
 
 ### タスク
 
-- [ ] **ONNX Runtime Web 導入**
+- [x] **ONNX Runtime Web 導入**
   - `onnxruntime-web` を依存に追加する
-- [ ] **モデル配信**
-  - `model.onnx` を `web/public/models/2048-ai.onnx` として配置する（`SPEC.md #17.5`）
-- [ ] **Neural Player 実装** — `web/src/model/neural-player.ts`
+  - `onnxruntime-web`(既定エントリ)は WebGPU/JSEP 込みで wasm が26MB超になるため、`onnxruntime-web/wasm` を使い13MB程度に抑えた
+  - Vite の dev サーバーでは `onnxruntime-web` を esbuild の dep pre-bundling に通すと wasm 取得が壊れる(index.htmlが返る)問題があったため、`vite.config.ts` の `optimizeDeps.exclude` に追加して回避した
+- [x] **モデル配信**
+  - `model.onnx` を `web/public/models/2048-ai.onnx` として配置した（`SPEC.md #17.5`）。Phase 7/8のスクリプトで生成した約7500レコード(depth2, 40ゲーム分)のデータセットで学習したモデル(精度は小規模データセットなりで平凡)
+- [x] **Neural Player 実装** — `web/src/model/neural-player.ts`
   - `Player` インターフェースを実装し、盤面 → log2 変換 → ONNX 推論 → `Direction` を返す（`SPEC.md #17.6`）
-  - 推論結果が `getValidMoves` に含まれない場合のフォールバック処理（次点の手を選ぶ等）を用意する
-- [ ] **UI 統合**
-  - AI 選択肢に Neural を追加する
-- [ ] **テスト**
-  - モデルロード〜推論〜`Direction` 返却までの一連の流れをテストする
-  - Python 側（ONNX Runtime）とブラウザ側（ONNX Runtime Web）で同一入力に対する出力が一致することを確認する
+  - 推論結果が `getValidMoves` に含まれない場合のフォールバック処理（ロジットの高い順に有効な手を探す）を実装した
+- [x] **UI 統合**
+  - AI 選択肢に Neural を追加した
+- [x] **テスト**
+  - モデルロード〜推論〜`Direction` 返却までの一連の流れをfakeセッションでテストした
+  - Python 側（ONNX Runtime）とブラウザ側（ONNX Runtime Web）で同一入力に対する出力が一致することを確認した(最大誤差 1.9e-6、浮動小数点誤差の範囲内)
 
 ### 完了条件
 探索なしで 2048 をプレイできる。
