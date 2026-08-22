@@ -193,17 +193,17 @@ AI 探索中も UI 操作やアニメーションが停止しない。
 
 ### タスク
 
-- [ ] **Action Values 表示** — `web/src/ui/stats.ts`
+- [x] **Action Values 表示** — `web/src/ui/stats.ts`
   - 各方向（UP/DOWN/LEFT/RIGHT）の評価値と、選択された手のハイライトを表示する（`SPEC.md #14.2`）
-- [ ] **探索統計表示**
+- [x] **探索統計表示**
   - Depth / Search Nodes / Elapsed Time / Cache Hits を表示する。`AIResponse` にキャッシュヒット数を追加する
-- [ ] **Evaluator Breakdown**
+- [x] **Evaluator Breakdown**
   - `evaluate()` を、合計値だけでなく各項目（empty / monotonicity / smoothness / merge / corner / snake）のスコア内訳も返せるように拡張する
   - UI 上で内訳を確認できるようにする
-- [ ] **Auto Play 速度設定**
-  - Slow / Normal / Fast / Maximum を実装する。Maximum ではアニメーションを省略する（`SPEC.md #14.3`）
-- [ ] **Web 版簡易 Benchmark**
-  - 「Run 100 Games」のような簡易ベンチマーク UI を実装する（`SPEC.md #14.4`）。大量実行はローカル Python 環境に誘導する注記を添える
+- [x] **Auto Play 速度設定**
+  - Slow / Normal / Fast / Maximum を実装する（`SPEC.md #14.3`）。現状 UI にタイル移動アニメーション自体がない（即時再描画）ため、Maximum での「アニメーション省略」は該当なし
+- [x] **Web 版簡易 Benchmark**
+  - 「Run N Games」の簡易ベンチマーク UI を実装した(`SPEC.md #14.4`)。大量実行はローカル Python 環境(Phase 7)を推奨する旨をコード内コメントに記載
 
 ### 完了条件
 AI がなぜその手を選んだかある程度見える。

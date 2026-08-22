@@ -44,6 +44,34 @@ describe("ExpectimaxPlayer — SPEC.md #11.5", () => {
     expect(result.stats.elapsedMs).toBeGreaterThanOrEqual(0);
   });
 
+  it("キャッシュヒット数 (cacheHits) を返す — SPEC.md #14.2", () => {
+    const board: Board = [
+      8, 4, 2, 0,
+      4, 2, 0, 0,
+      2, 0, 0, 0,
+      0, 0, 0, 0,
+    ];
+    const player = new ExpectimaxPlayer(4);
+    const result = player.evaluateBoard(board);
+    expect(result.stats.cacheHits).toBeGreaterThan(0);
+    // ヒット数はキャッシュに登録されたノード数を超えない
+    expect(result.stats.cacheHits).toBeLessThanOrEqual(result.stats.nodes);
+  });
+
+  it("有効な各方向の Action Values を返す — SPEC.md #14.2", () => {
+    const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const player = new ExpectimaxPlayer(2);
+    const result = player.evaluateBoard(board);
+    const validMoves = getValidMoves(board);
+
+    expect(Object.keys(result.actionValues).sort()).toEqual([...validMoves].sort());
+    // 最善手として選ばれた方向の値が、その他のどの方向の値よりも大きいか等しい
+    for (const direction of validMoves) {
+      expect(result.actionValues[direction]).toBeLessThanOrEqual(result.evaluation);
+    }
+    expect(result.actionValues[result.direction]).toBe(result.evaluation);
+  });
+
   it("明らかに良い手を選ぶ（マージして左上の角にタイルを寄せる）", async () => {
     // LEFT: [4,0,0,0] (角に4、空きマス+1) / RIGHT: [0,0,0,4] (同じくマージするが角の重みが低い)
     const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];

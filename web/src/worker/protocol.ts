@@ -14,6 +14,9 @@ export interface AIResponse {
   id: string;
   direction: Direction;
   evaluation: number;
+  /** 各方向(有効な手のみ)の評価値。Action Values 表示に使う (SPEC.md #14.2) */
+  actionValues: Partial<Record<Direction, number>>;
   nodes: number;
+  cacheHits: number;
   elapsedMs: number;
 }

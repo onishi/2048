@@ -25,7 +25,9 @@ ctx.onmessage = (event) => {
     id: request.id,
     direction: result.direction,
     evaluation: result.evaluation,
+    actionValues: result.actionValues,
     nodes: result.stats.nodes,
+    cacheHits: result.stats.cacheHits,
     elapsedMs: result.stats.elapsedMs,
   };
   ctx.postMessage(response);
