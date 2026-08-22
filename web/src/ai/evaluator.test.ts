@@ -4,6 +4,7 @@ import {
   cornerBonus,
   emptyScore,
   evaluate,
+  evaluateWithBreakdown,
   mergePotentialScore,
   monotonicityScore,
   smoothnessPenalty,
@@ -109,5 +110,33 @@ describe("evaluate — SPEC.md #12.1 の符号規約", () => {
       DEFAULT_WEIGHTS.snake * snakeScore(board);
 
     expect(evaluate(board, DEFAULT_WEIGHTS)).toBe(expected);
+  });
+});
+
+describe("evaluateWithBreakdown — SPEC.md #14.2 Evaluator Breakdown", () => {
+  it("内訳の合計が evaluate() の返り値と一致する", () => {
+    const board: Board = [
+      2048, 1024, 512, 256,
+      16, 32, 64, 128,
+      8, 4, 2, 0,
+      0, 0, 0, 0,
+    ];
+    const breakdown = evaluateWithBreakdown(board, DEFAULT_WEIGHTS);
+    const sum =
+      breakdown.empty +
+      breakdown.monotonicity +
+      breakdown.smoothness +
+      breakdown.merge +
+      breakdown.corner +
+      breakdown.snake;
+
+    expect(breakdown.total).toBe(sum);
+    expect(breakdown.total).toBe(evaluate(board, DEFAULT_WEIGHTS));
+  });
+
+  it("smoothness の内訳は0以下の値になる（ペナルティのため）", () => {
+    const board: Board = [128, 2, 64, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const breakdown = evaluateWithBreakdown(board, DEFAULT_WEIGHTS);
+    expect(breakdown.smoothness).toBeLessThanOrEqual(0);
   });
 });

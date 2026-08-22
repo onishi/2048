@@ -230,3 +230,107 @@ body {
   visibility: visible;
   opacity: 1;
 }
+
+.ai-stats {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(238, 228, 218, 0.5);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+.ai-stats.visible {
+  display: flex;
+}
+
+.ai-stats table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ai-stats .action-values td,
+.ai-stats .action-values th {
+  padding: 2px 6px;
+  text-align: left;
+}
+
+.ai-stats .action-values tr.best {
+  font-weight: 700;
+  color: #f65e3b;
+}
+
+.ai-stats .search-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.ai-stats .search-stats > div {
+  display: flex;
+  gap: 4px;
+}
+
+.ai-stats .search-stats dt {
+  font-weight: 700;
+}
+
+.ai-stats .search-stats dd {
+  margin: 0;
+}
+
+.ai-stats .evaluator-breakdown summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ai-stats .evaluator-breakdown td {
+  padding: 2px 6px;
+}
+
+.benchmark-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.benchmark-bar input[type="number"] {
+  width: 64px;
+  border-radius: 6px;
+  border: 1px solid var(--board-bg);
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+.benchmark-bar button {
+  background: var(--board-bg);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.benchmark-bar button:hover {
+  filter: brightness(1.1);
+}
+
+.benchmark-bar button:disabled,
+.ai-bar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.benchmark-results {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(238, 228, 218, 0.5);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  min-height: 1.2em;
+}

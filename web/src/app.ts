@@ -1,19 +1,34 @@
+import { runBenchmark } from "./ai/benchmark";
+import { evaluateWithBreakdown } from "./ai/evaluator";
 import { DEFAULT_DEPTH } from "./ai/expectimax-player";
 import { GreedyPlayer } from "./ai/greedy-player";
 import type { Player } from "./ai/player";
 import { RandomPlayer } from "./ai/random-player";
 import { WorkerExpectimaxPlayer } from "./ai/worker-expectimax-player";
+import { DEFAULT_WEIGHTS } from "./ai/weights";
 import { applyMove, createInitialState } from "./game/game";
+import { move } from "./game/move";
 import { createRandomRng } from "./game/rng";
-import type { Direction, GameState } from "./game/types";
+import type { Board, Direction, GameState } from "./game/types";
 import { renderBoard, renderMessage, renderScore } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
+import { renderAiStats, renderBenchmarkResults, type AiStatsData } from "./ui/stats";
 import { AiWorkerClient } from "./worker/ai-worker-client";
 
-type AiType = "random" | "greedy" | "expectimax";
+const MAX_BENCHMARK_GAMES = 200;
 
-const AUTO_PLAY_INTERVAL_MS = 200;
+type AiType = "random" | "greedy" | "expectimax";
+type AutoPlaySpeed = "slow" | "normal" | "fast" | "maximum";
+
 const DEPTH_OPTIONS = [2, 3, 4, 5, 6] as const;
+
+/** SPEC.md #14.3: Auto Play 速度。値は手と手の間隔(ms) */
+const AUTO_PLAY_INTERVALS_MS: Record<AutoPlaySpeed, number> = {
+  slow: 800,
+  normal: 300,
+  fast: 100,
+  maximum: 0,
+};
 
 const TEMPLATE = `
   <div class="game">
@@ -51,10 +66,28 @@ const TEMPLATE = `
           ).join("")}
         </select>
       </label>
+      <label class="ai-select-label">
+        Speed:
+        <select id="speed-select">
+          <option value="slow">Slow</option>
+          <option value="normal" selected>Normal</option>
+          <option value="fast">Fast</option>
+          <option value="maximum">Maximum</option>
+        </select>
+      </label>
       <button id="ai-move-button" type="button">AI Move</button>
       <button id="auto-play-button" type="button">Start AI</button>
     </div>
     <p class="ai-suggestion" id="ai-suggestion"></p>
+    <div class="ai-stats" id="ai-stats"></div>
+    <div class="benchmark-bar">
+      <label class="ai-select-label">
+        Games:
+        <input id="benchmark-games" type="number" min="1" max="${MAX_BENCHMARK_GAMES}" value="10" />
+      </label>
+      <button id="benchmark-button" type="button">Run Benchmark</button>
+    </div>
+    <pre class="benchmark-results" id="benchmark-results"></pre>
     <div class="controls">
       <button id="reset-button" type="button">Reset</button>
     </div>
@@ -70,13 +103,20 @@ export class App {
   private readonly messageEl: HTMLElement;
   private readonly aiSelectEl: HTMLSelectElement;
   private readonly depthSelectEl: HTMLSelectElement;
+  private readonly speedSelectEl: HTMLSelectElement;
   private readonly aiSuggestionEl: HTMLElement;
+  private readonly aiStatsEl: HTMLElement;
   private readonly autoPlayButtonEl: HTMLButtonElement;
+  private readonly benchmarkGamesEl: HTMLInputElement;
+  private readonly benchmarkButtonEl: HTMLButtonElement;
+  private readonly benchmarkResultsEl: HTMLElement;
 
   private aiType: AiType = "greedy";
   private depth: number = DEFAULT_DEPTH;
+  private autoPlaySpeed: AutoPlaySpeed = "normal";
   private autoPlayRunning = false;
   private autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
+  private benchmarkRunning = false;
   /** Expectimax 用の Worker クライアント。使われるまで生成しない (SPEC.md #13) */
   private aiWorkerClient: AiWorkerClient | null = null;
 
@@ -89,8 +129,13 @@ export class App {
     this.messageEl = this.query("#message");
     this.aiSelectEl = this.query<HTMLSelectElement>("#ai-select");
     this.depthSelectEl = this.query<HTMLSelectElement>("#depth-select");
+    this.speedSelectEl = this.query<HTMLSelectElement>("#speed-select");
     this.aiSuggestionEl = this.query("#ai-suggestion");
+    this.aiStatsEl = this.query("#ai-stats");
     this.autoPlayButtonEl = this.query<HTMLButtonElement>("#auto-play-button");
+    this.benchmarkGamesEl = this.query<HTMLInputElement>("#benchmark-games");
+    this.benchmarkButtonEl = this.query<HTMLButtonElement>("#benchmark-button");
+    this.benchmarkResultsEl = this.query("#benchmark-results");
 
     this.state = createInitialState(this.rng);
     this.render();
@@ -101,10 +146,15 @@ export class App {
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
     this.aiSelectEl.addEventListener("change", () => {
       this.aiType = this.aiSelectEl.value as AiType;
+      this.clearAiStats();
     });
     this.depthSelectEl.addEventListener("change", () => {
       this.depth = Number(this.depthSelectEl.value);
     });
+    this.speedSelectEl.addEventListener("change", () => {
+      this.autoPlaySpeed = this.speedSelectEl.value as AutoPlaySpeed;
+    });
+    this.benchmarkButtonEl.addEventListener("click", () => this.runBenchmarkFromUi());
   }
 
   private query<T extends HTMLElement = HTMLElement>(selector: string): T {
@@ -131,6 +181,91 @@ export class App {
     }
   }
 
+  private clearAiStats(): void {
+    renderAiStats(this.aiStatsEl, null);
+  }
+
+  /**
+   * ベンチマーク実行中の1ゲームごとに使う Player を作る。
+   * メイン画面の Auto Play とは独立させるため、Expectimax の場合は
+   * 呼び出し側が用意した専用の AiWorkerClient を使う。
+   */
+  private createBenchmarkPlayer(workerClient: AiWorkerClient | null): Player {
+    switch (this.aiType) {
+      case "random":
+        return new RandomPlayer(createRandomRng());
+      case "expectimax":
+        if (!workerClient) throw new Error("workerClient is required for Expectimax");
+        return new WorkerExpectimaxPlayer(workerClient, this.depth);
+      case "greedy":
+        return new GreedyPlayer();
+    }
+  }
+
+  /** ベンチマーク実行中とAuto Play実行中で互いの操作を無効化する (SPEC.md #14.4) */
+  private setBenchmarkControlsDisabled(disabled: boolean): void {
+    this.benchmarkButtonEl.disabled = disabled;
+    this.benchmarkGamesEl.disabled = disabled;
+  }
+
+  private setGameplayControlsDisabled(disabled: boolean): void {
+    this.autoPlayButtonEl.disabled = disabled;
+    this.query<HTMLButtonElement>("#ai-move-button").disabled = disabled;
+  }
+
+  /** Web 版簡易ベンチマーク (SPEC.md #14.4, #42)。大量実行はローカルの Python 環境を推奨する */
+  private async runBenchmarkFromUi(): Promise<void> {
+    if (this.benchmarkRunning || this.autoPlayRunning) return;
+
+    const games = Math.min(MAX_BENCHMARK_GAMES, Math.max(1, Math.floor(Number(this.benchmarkGamesEl.value)) || 1));
+    this.benchmarkRunning = true;
+    this.setBenchmarkControlsDisabled(true);
+    this.setGameplayControlsDisabled(true);
+    this.benchmarkResultsEl.textContent = `Running 0/${games}...`;
+
+    // メイン画面の AiWorkerClient とは分離し、Reset/Pause の cancel() の影響を受けないようにする
+    const benchmarkWorkerClient = this.aiType === "expectimax" ? new AiWorkerClient() : null;
+
+    try {
+      const summary = await runBenchmark({
+        games,
+        createPlayer: () => this.createBenchmarkPlayer(benchmarkWorkerClient),
+        onProgress: (completed, total) => {
+          this.benchmarkResultsEl.textContent = `Running ${completed}/${total}...`;
+        },
+      });
+      renderBenchmarkResults(this.benchmarkResultsEl, summary);
+    } catch (error) {
+      this.benchmarkResultsEl.textContent = `Benchmark failed: ${error instanceof Error ? error.message : String(error)}`;
+    } finally {
+      benchmarkWorkerClient?.terminate();
+      this.benchmarkRunning = false;
+      this.setBenchmarkControlsDisabled(false);
+      this.setGameplayControlsDisabled(false);
+    }
+  }
+
+  /**
+   * Expectimax の探索結果から AI 情報表示用データを組み立てる。
+   * Evaluator Breakdown (SPEC.md #14.2) は選ばれた手を適用した後の盤面に対して計算する。
+   */
+  private buildStatsData(
+    board: Board,
+    result: { direction: Direction; evaluation: number; actionValues: Partial<Record<Direction, number>>; nodes: number; cacheHits: number; elapsedMs: number },
+  ): AiStatsData {
+    const resultingBoard = move(board, result.direction).board;
+    return {
+      direction: result.direction,
+      evaluation: result.evaluation,
+      actionValues: result.actionValues,
+      depth: this.depth,
+      nodes: result.nodes,
+      cacheHits: result.cacheHits,
+      elapsedMs: result.elapsedMs,
+      breakdown: evaluateWithBreakdown(resultingBoard, DEFAULT_WEIGHTS),
+    };
+  }
+
   private handleMove(direction: Direction): void {
     this.state = applyMove(this.state, direction, this.rng);
     this.render();
@@ -142,19 +277,15 @@ export class App {
 
     try {
       if (player instanceof WorkerExpectimaxPlayer) {
-        // SPEC.md #8.2: Evaluation/Depth/Nodes/Time も合わせて表示する
         const result = await player.evaluateBoard(this.state.board);
-        this.aiSuggestionEl.textContent =
-          `AI recommends: ${result.direction.toUpperCase()} ` +
-          `| Evaluation: ${Math.round(result.evaluation).toLocaleString()} ` +
-          `| Depth: ${this.depth} ` +
-          `| Nodes: ${result.nodes.toLocaleString()} ` +
-          `| Time: ${result.elapsedMs.toFixed(1)} ms`;
+        this.aiSuggestionEl.textContent = `AI recommends: ${result.direction.toUpperCase()}`;
+        renderAiStats(this.aiStatsEl, this.buildStatsData(this.state.board, result));
         return;
       }
 
       const direction = await player.chooseMove(this.state.board);
       this.aiSuggestionEl.textContent = `AI recommends: ${direction.toUpperCase()}`;
+      this.clearAiStats();
     } catch {
       // Reset 等で Worker がキャンセルされた場合は何もしない (SPEC.md #13.2)
     }
@@ -172,6 +303,7 @@ export class App {
     if (this.state.gameOver) return;
     this.autoPlayRunning = true;
     this.autoPlayButtonEl.textContent = "Pause";
+    this.setBenchmarkControlsDisabled(true);
     this.runAutoPlayStep();
   }
 
@@ -182,6 +314,7 @@ export class App {
       clearTimeout(this.autoPlayTimer);
       this.autoPlayTimer = null;
     }
+    if (!this.benchmarkRunning) this.setBenchmarkControlsDisabled(false);
     // Pause / Reset / New Game: 進行中の探索結果を無視する (SPEC.md #13.2)
     this.aiWorkerClient?.cancel();
   }
@@ -193,14 +326,25 @@ export class App {
     }
 
     const player = this.createPlayer();
-    player
-      .chooseMove(this.state.board)
+    const board = this.state.board;
+    const movePromise: Promise<Direction> =
+      player instanceof WorkerExpectimaxPlayer
+        ? player.evaluateBoard(board).then((result) => {
+            if (this.autoPlayRunning) {
+              renderAiStats(this.aiStatsEl, this.buildStatsData(board, result));
+            }
+            return result.direction;
+          })
+        : player.chooseMove(board);
+
+    movePromise
       .then((direction) => {
         // Pause 中に届いた古い結果は無視する (SPEC.md #13.2)
         if (!this.autoPlayRunning) return;
         this.state = applyMove(this.state, direction, this.rng);
         this.render();
-        this.autoPlayTimer = setTimeout(() => this.runAutoPlayStep(), AUTO_PLAY_INTERVAL_MS);
+        const intervalMs = AUTO_PLAY_INTERVALS_MS[this.autoPlaySpeed];
+        this.autoPlayTimer = setTimeout(() => this.runAutoPlayStep(), intervalMs);
       })
       .catch(() => this.stopAutoPlay());
   }
@@ -209,6 +353,7 @@ export class App {
     this.stopAutoPlay();
     this.state = createInitialState(this.rng);
     this.aiSuggestionEl.textContent = "";
+    this.clearAiStats();
     this.render();
   }
 

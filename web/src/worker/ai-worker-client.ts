@@ -4,7 +4,9 @@ import type { AIRequest, AIResponse } from "./protocol";
 export interface AiWorkerResult {
   direction: Direction;
   evaluation: number;
+  actionValues: Partial<Record<Direction, number>>;
   nodes: number;
+  cacheHits: number;
   elapsedMs: number;
 }
 
@@ -42,7 +44,9 @@ export class AiWorkerClient {
     pending.resolve({
       direction: response.direction,
       evaluation: response.evaluation,
+      actionValues: response.actionValues,
       nodes: response.nodes,
+      cacheHits: response.cacheHits,
       elapsedMs: response.elapsedMs,
     });
   }

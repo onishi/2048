@@ -127,17 +127,47 @@ export function snakeScore(board: Board): number {
   return score;
 }
 
+/** evaluate() の内訳。AI 情報表示 (SPEC.md #14.2 の Evaluator Breakdown) で使う */
+export interface EvaluationBreakdown {
+  empty: number;
+  monotonicity: number;
+  smoothness: number;
+  merge: number;
+  corner: number;
+  snake: number;
+  total: number;
+}
+
+/**
+ * 盤面を数値化し、各項目の重み付き寄与も内訳として返す (SPEC.md #12)。
+ * Smoothness のみペナルティとして減算し、それ以外は加点として扱う (SPEC.md #12.1)。
+ */
+export function evaluateWithBreakdown(
+  board: Board,
+  weights: EvaluationWeights = DEFAULT_WEIGHTS,
+): EvaluationBreakdown {
+  const empty = weights.empty * emptyScore(board);
+  const monotonicity = weights.monotonicity * monotonicityScore(board);
+  const smoothness = -(weights.smoothness * smoothnessPenalty(board));
+  const merge = weights.merge * mergePotentialScore(board);
+  const corner = weights.corner * cornerBonus(board);
+  const snake = weights.snake * snakeScore(board);
+
+  return {
+    empty,
+    monotonicity,
+    smoothness,
+    merge,
+    corner,
+    snake,
+    total: empty + monotonicity + smoothness + merge + corner + snake,
+  };
+}
+
 /**
  * 盤面を数値化する (SPEC.md #12)。
  * Smoothness のみペナルティとして減算し、それ以外は加点として扱う (SPEC.md #12.1)。
  */
 export function evaluate(board: Board, weights: EvaluationWeights = DEFAULT_WEIGHTS): number {
-  return (
-    weights.empty * emptyScore(board) +
-    weights.monotonicity * monotonicityScore(board) -
-    weights.smoothness * smoothnessPenalty(board) +
-    weights.merge * mergePotentialScore(board) +
-    weights.corner * cornerBonus(board) +
-    weights.snake * snakeScore(board)
-  );
+  return evaluateWithBreakdown(board, weights).total;
 }

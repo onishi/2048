@@ -59,7 +59,9 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       id: worker.posted[0].id,
       direction: "left",
       evaluation: 123,
+      actionValues: {},
       nodes: 456,
+      cacheHits: 0,
       elapsedMs: 12.3,
     });
 
@@ -83,7 +85,9 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       id: firstId,
       direction: "up",
       evaluation: 1,
+      actionValues: {},
       nodes: 1,
+      cacheHits: 0,
       elapsedMs: 1,
     });
     worker.respond({
@@ -91,7 +95,9 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       id: secondId,
       direction: "right",
       evaluation: 2,
+      actionValues: {},
       nodes: 2,
+      cacheHits: 0,
       elapsedMs: 2,
     });
 
@@ -128,7 +134,9 @@ describe("AiWorkerClient — SPEC.md #13", () => {
       id: newWorker.posted[0].id,
       direction: "down",
       evaluation: 9,
+      actionValues: {},
       nodes: 9,
+      cacheHits: 0,
       elapsedMs: 9,
     });
 
