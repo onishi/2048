@@ -51,6 +51,22 @@ npm run build
 
 デプロイ後に表示される URL でアプリにアクセスできる。
 
+### GitHub Actions による自動デプロイ
+
+`.github/workflows/deploy.yml` により、`main` への push と手動実行時にテスト・型チェック・本番ビルドを行い、成功した場合のみ Cloudflare Workers へデプロイする。
+
+GitHub リポジトリの Actions secrets に以下を設定する。
+
+- `CLOUDFLARE_ACCOUNT_ID`: デプロイ先の Cloudflare Account ID
+- `CLOUDFLARE_API_TOKEN`: [Cloudflare の API Tokens 画面](https://dash.cloudflare.com/profile/api-tokens)で作成し、対象アカウントのみにスコープを限定して `Edit Cloudflare Workers` 権限を付与した API Token
+
+GitHub CLI で設定する場合、値をコマンドライン引数へ含めず、プロンプトから入力する。
+
+```bash
+gh secret set CLOUDFLARE_ACCOUNT_ID
+gh secret set CLOUDFLARE_API_TOKEN
+```
+
 ローカルで Cloudflare の実行環境を再現して確認したい場合は、デプロイせずに以下を実行する。
 
 ```bash

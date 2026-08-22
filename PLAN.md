@@ -171,19 +171,19 @@ AI 探索中も UI 操作やアニメーションが停止しない。
   - D1 / R2 はこの時点では使用しない
 - [x] **ビルド確認**
   - `vite build` の出力を Cloudflare Static Assets が期待する形に配置する
-- [ ] **デプロイフロー**
+- [x] **デプロイフロー**
   - `wrangler dev` によるローカルでの Cloudflare 実行環境エミュレーションでは、Static Assets 配信・Web Worker (Expectimax) とも正常動作を確認済み
-  - `wrangler deploy` による実際の公開は **未実施**（Cloudflare アカウントの認証情報がこの環境にないため）。ユーザー側で `npx wrangler login` の上 `npm run deploy` を実行するか、`CLOUDFLARE_API_TOKEN` を渡してもらう必要がある
-  - 可能であれば GitHub Actions 等での自動デプロイを検討する（必須ではない）
+  - 2026-08-22 に `wrangler deploy` で Cloudflare Workers Static Assets へ公開済み（https://2048-ai.wagaya.workers.dev）
+  - `.github/workflows/deploy.yml` を追加し、`main` への push 時にテスト・型チェック・ビルド成功後、GitHub Actions から自動デプロイする
 - [ ] **本番スモークテスト**
   - 公開 URL 上で Play / AI Move / Auto Play が問題なく動作することを確認する（`SPEC.md #14.5` の対応ブラウザを一通り確認）
-  - デプロイフローが未実施のため未着手
+  - HTML / JavaScript / CSS / Web Worker / ONNX / WASM の配信は HTTP 200 を確認済み。Play / AI Move / Auto Play の実ブラウザ操作と対応ブラウザ一式の確認は未実施
 - [x] **README 更新**
   - セットアップ手順・デプロイ手順を `README.md` に記載する
 
 ### 完了条件
 公開 URL から 2048 AI を利用できる。
-**未達成**: ビルド・Wrangler 設定・ローカルでの Cloudflare 実行環境エミュレーションまでは完了しているが、実際の公開デプロイには Cloudflare アカウントの認証情報が必要なため保留中。
+**達成**: 2026-08-22 に https://2048-ai.wagaya.workers.dev へ公開済み。本番環境での実ブラウザ操作と対応ブラウザ一式のスモークテストは引き続き必要。
 
 ---
 
