@@ -10,6 +10,7 @@ import { applyMove, createInitialState } from "./game/game";
 import { move } from "./game/move";
 import { createRandomRng } from "./game/rng";
 import type { Board, Direction, GameState } from "./game/types";
+import { NeuralPlayer } from "./model/neural-player";
 import { renderBoard, renderMessage, renderScore } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
 import { renderAiStats, renderBenchmarkResults, type AiStatsData } from "./ui/stats";
@@ -17,7 +18,7 @@ import { AiWorkerClient } from "./worker/ai-worker-client";
 
 const MAX_BENCHMARK_GAMES = 200;
 
-type AiType = "random" | "greedy" | "expectimax";
+type AiType = "random" | "greedy" | "expectimax" | "neural";
 type AutoPlaySpeed = "slow" | "normal" | "fast" | "maximum";
 
 const DEPTH_OPTIONS = [2, 3, 4, 5, 6] as const;
@@ -56,6 +57,7 @@ const TEMPLATE = `
           <option value="random">Random</option>
           <option value="greedy" selected>Greedy</option>
           <option value="expectimax">Expectimax</option>
+          <option value="neural">Neural</option>
         </select>
       </label>
       <label class="ai-select-label">
@@ -176,6 +178,8 @@ export class App {
         return new RandomPlayer(this.rng);
       case "expectimax":
         return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth);
+      case "neural":
+        return new NeuralPlayer();
       case "greedy":
         return new GreedyPlayer();
     }
@@ -197,6 +201,8 @@ export class App {
       case "expectimax":
         if (!workerClient) throw new Error("workerClient is required for Expectimax");
         return new WorkerExpectimaxPlayer(workerClient, this.depth);
+      case "neural":
+        return new NeuralPlayer();
       case "greedy":
         return new GreedyPlayer();
     }
