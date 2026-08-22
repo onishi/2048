@@ -1,12 +1,14 @@
-import { DEFAULT_DEPTH, ExpectimaxPlayer } from "./ai/expectimax-player";
+import { DEFAULT_DEPTH } from "./ai/expectimax-player";
 import { GreedyPlayer } from "./ai/greedy-player";
 import type { Player } from "./ai/player";
 import { RandomPlayer } from "./ai/random-player";
+import { WorkerExpectimaxPlayer } from "./ai/worker-expectimax-player";
 import { applyMove, createInitialState } from "./game/game";
 import { createRandomRng } from "./game/rng";
 import type { Direction, GameState } from "./game/types";
 import { renderBoard, renderMessage, renderScore } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
+import { AiWorkerClient } from "./worker/ai-worker-client";
 
 type AiType = "random" | "greedy" | "expectimax";
 
@@ -75,6 +77,8 @@ export class App {
   private depth: number = DEFAULT_DEPTH;
   private autoPlayRunning = false;
   private autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Expectimax 用の Worker クライアント。使われるまで生成しない (SPEC.md #13) */
+  private aiWorkerClient: AiWorkerClient | null = null;
 
   constructor(private readonly root: HTMLElement) {
     this.root.innerHTML = TEMPLATE;
@@ -109,12 +113,19 @@ export class App {
     return element;
   }
 
+  private getAiWorkerClient(): AiWorkerClient {
+    if (!this.aiWorkerClient) {
+      this.aiWorkerClient = new AiWorkerClient();
+    }
+    return this.aiWorkerClient;
+  }
+
   private createPlayer(): Player {
     switch (this.aiType) {
       case "random":
         return new RandomPlayer(this.rng);
       case "expectimax":
-        return new ExpectimaxPlayer(this.depth);
+        return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth);
       case "greedy":
         return new GreedyPlayer();
     }
@@ -129,20 +140,24 @@ export class App {
     if (this.state.gameOver) return;
     const player = this.createPlayer();
 
-    if (player instanceof ExpectimaxPlayer) {
-      // SPEC.md #8.2: Evaluation/Depth/Nodes/Time も合わせて表示する
-      const result = player.evaluateBoard(this.state.board);
-      this.aiSuggestionEl.textContent =
-        `AI recommends: ${result.direction.toUpperCase()} ` +
-        `| Evaluation: ${Math.round(result.evaluation).toLocaleString()} ` +
-        `| Depth: ${this.depth} ` +
-        `| Nodes: ${result.stats.nodes.toLocaleString()} ` +
-        `| Time: ${result.stats.elapsedMs.toFixed(1)} ms`;
-      return;
-    }
+    try {
+      if (player instanceof WorkerExpectimaxPlayer) {
+        // SPEC.md #8.2: Evaluation/Depth/Nodes/Time も合わせて表示する
+        const result = await player.evaluateBoard(this.state.board);
+        this.aiSuggestionEl.textContent =
+          `AI recommends: ${result.direction.toUpperCase()} ` +
+          `| Evaluation: ${Math.round(result.evaluation).toLocaleString()} ` +
+          `| Depth: ${this.depth} ` +
+          `| Nodes: ${result.nodes.toLocaleString()} ` +
+          `| Time: ${result.elapsedMs.toFixed(1)} ms`;
+        return;
+      }
 
-    const direction = await player.chooseMove(this.state.board);
-    this.aiSuggestionEl.textContent = `AI recommends: ${direction.toUpperCase()}`;
+      const direction = await player.chooseMove(this.state.board);
+      this.aiSuggestionEl.textContent = `AI recommends: ${direction.toUpperCase()}`;
+    } catch {
+      // Reset 等で Worker がキャンセルされた場合は何もしない (SPEC.md #13.2)
+    }
   }
 
   private toggleAutoPlay(): void {
@@ -167,6 +182,8 @@ export class App {
       clearTimeout(this.autoPlayTimer);
       this.autoPlayTimer = null;
     }
+    // Pause / Reset / New Game: 進行中の探索結果を無視する (SPEC.md #13.2)
+    this.aiWorkerClient?.cancel();
   }
 
   private runAutoPlayStep(): void {
@@ -179,6 +196,8 @@ export class App {
     player
       .chooseMove(this.state.board)
       .then((direction) => {
+        // Pause 中に届いた古い結果は無視する (SPEC.md #13.2)
+        if (!this.autoPlayRunning) return;
         this.state = applyMove(this.state, direction, this.rng);
         this.render();
         this.autoPlayTimer = setTimeout(() => this.runAutoPlayStep(), AUTO_PLAY_INTERVAL_MS);
