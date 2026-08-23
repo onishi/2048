@@ -1,21 +1,23 @@
-import { BOARD_SIZE, getMaxTile } from "../game/board";
+import { boardSizeOf, getMaxTile } from "../game/board";
 import type { Board } from "../game/types";
 import { DEFAULT_WEIGHTS, type EvaluationWeights } from "./weights";
 
-const CORNER_INDICES = [0, BOARD_SIZE - 1, BOARD_SIZE * (BOARD_SIZE - 1), BOARD_SIZE * BOARD_SIZE - 1] as const;
+function cornerIndices(size: number): readonly number[] {
+  return [0, size - 1, size * (size - 1), size * size - 1];
+}
 
 function log2OrZero(value: number): number {
   return value === 0 ? 0 : Math.log2(value);
 }
 
-function getRow(board: Board, r: number): number[] {
-  return board.slice(r * BOARD_SIZE, r * BOARD_SIZE + BOARD_SIZE);
+function getRow(board: Board, size: number, r: number): number[] {
+  return board.slice(r * size, r * size + size);
 }
 
-function getColumn(board: Board, c: number): number[] {
+function getColumn(board: Board, size: number, c: number): number[] {
   const column: number[] = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    column.push(board[r * BOARD_SIZE + c]);
+  for (let r = 0; r < size; r++) {
+    column.push(board[r * size + c]);
   }
   return column;
 }
@@ -33,7 +35,8 @@ export function emptyScore(board: Board): number {
 export function cornerBonus(board: Board): number {
   const maxTile = getMaxTile(board);
   if (maxTile === 0) return 0;
-  return CORNER_INDICES.some((i) => board[i] === maxTile) ? maxTile : 0;
+  const size = boardSizeOf(board);
+  return cornerIndices(size).some((i) => board[i] === maxTile) ? maxTile : 0;
 }
 
 /**
@@ -57,12 +60,13 @@ function lineMonotonicityCredit(values: number[]): number {
 
 /** 大きいタイルから小さいタイルへ単調に並ぶ状態を評価する (SPEC.md #12.4) */
 export function monotonicityScore(board: Board): number {
+  const size = boardSizeOf(board);
   let score = 0;
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    score += lineMonotonicityCredit(getRow(board, r));
+  for (let r = 0; r < size; r++) {
+    score += lineMonotonicityCredit(getRow(board, size, r));
   }
-  for (let c = 0; c < BOARD_SIZE; c++) {
-    score += lineMonotonicityCredit(getColumn(board, c));
+  for (let c = 0; c < size; c++) {
+    score += lineMonotonicityCredit(getColumn(board, size, c));
   }
   return score;
 }
@@ -72,19 +76,20 @@ export function monotonicityScore(board: Board): number {
  * evaluate() では減算するペナルティ項として扱う (SPEC.md #12.5, #12.1)。
  */
 export function smoothnessPenalty(board: Board): number {
+  const size = boardSizeOf(board);
   let penalty = 0;
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      const value = board[r * BOARD_SIZE + c];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const value = board[r * size + c];
       if (value === 0) continue;
       const logValue = Math.log2(value);
 
-      if (c + 1 < BOARD_SIZE) {
-        const right = board[r * BOARD_SIZE + c + 1];
+      if (c + 1 < size) {
+        const right = board[r * size + c + 1];
         if (right !== 0) penalty += Math.abs(logValue - Math.log2(right));
       }
-      if (r + 1 < BOARD_SIZE) {
-        const down = board[(r + 1) * BOARD_SIZE + c];
+      if (r + 1 < size) {
+        const down = board[(r + 1) * size + c];
         if (down !== 0) penalty += Math.abs(logValue - Math.log2(down));
       }
     }
@@ -94,35 +99,56 @@ export function smoothnessPenalty(board: Board): number {
 
 /** 同じ数字が隣接している場合に加点する (SPEC.md #12.6) */
 export function mergePotentialScore(board: Board): number {
+  const size = boardSizeOf(board);
   let count = 0;
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      const value = board[r * BOARD_SIZE + c];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const value = board[r * size + c];
       if (value === 0) continue;
-      if (c + 1 < BOARD_SIZE && board[r * BOARD_SIZE + c + 1] === value) count += 1;
-      if (r + 1 < BOARD_SIZE && board[(r + 1) * BOARD_SIZE + c] === value) count += 1;
+      if (c + 1 < size && board[r * size + c + 1] === value) count += 1;
+      if (r + 1 < size && board[(r + 1) * size + c] === value) count += 1;
     }
   }
   return count;
 }
 
 /**
- * 蛇状（boustrophedon）に高いタイルを維持する盤面を評価するための重み行列。
- * SPEC.md #12.7 の例（2048 1024 512 256 / 16 32 64 128 / 8 4 2 0 / 0 0 0 0）で
- * 最大の重みが割り当たるよう構成している。
+ * 蛇状（boustrophedon）に高いタイルを維持する盤面を評価するための重み行列を、
+ * 任意の盤面サイズに対して生成する。1行目は左→右、2行目は右→左…と交互にたどる経路上で
+ * 重みが単調に減っていくよう割り当てる(先頭マスが最大の重み `size*size - 1`)。
+ * SPEC.md #12.7 の4x4の例（2048 1024 512 256 / 16 32 64 128 / 8 4 2 0 / 0 0 0 0）と一致する。
  */
-const SNAKE_WEIGHTS: readonly number[] = [
-  15, 14, 13, 12,
-  8, 9, 10, 11,
-  7, 6, 5, 4,
-  0, 1, 2, 3,
-];
+function generateSnakeWeights(size: number): number[] {
+  const weights = new Array<number>(size * size).fill(0);
+  let value = size * size - 1;
+  for (let r = 0; r < size; r++) {
+    const leftToRight = r % 2 === 0;
+    for (let i = 0; i < size; i++) {
+      const c = leftToRight ? i : size - 1 - i;
+      weights[r * size + c] = value;
+      value -= 1;
+    }
+  }
+  return weights;
+}
+
+const snakeWeightsCache = new Map<number, readonly number[]>();
+
+function getSnakeWeights(size: number): readonly number[] {
+  let weights = snakeWeightsCache.get(size);
+  if (!weights) {
+    weights = generateSnakeWeights(size);
+    snakeWeightsCache.set(size, weights);
+  }
+  return weights;
+}
 
 /** 蛇状配置を評価する (SPEC.md #12.7) */
 export function snakeScore(board: Board): number {
+  const weights = getSnakeWeights(boardSizeOf(board));
   let score = 0;
   for (let i = 0; i < board.length; i++) {
-    score += board[i] * SNAKE_WEIGHTS[i];
+    score += board[i] * weights[i];
   }
   return score;
 }

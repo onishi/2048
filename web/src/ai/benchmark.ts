@@ -1,3 +1,4 @@
+import { DEFAULT_BOARD_SIZE } from "../game/board";
 import { applyMove, createInitialState, getMaxTile } from "../game/game";
 import { createRng } from "../game/rng";
 import type { Player } from "./player";
@@ -27,7 +28,19 @@ export interface RunBenchmarkOptions {
   onProgress?: (completed: number, total: number) => void;
   /** 何ゲームごとにイベントループへ制御を返すか(UI の応答性確保のため) */
   yieldEvery?: number;
+  /** 盤面サイズ。既定は 4x4 (issue #16, #17) */
+  boardSize?: number;
+  /**
+   * 1ゲームあたりの最大手数。盤面が大きいほど空きマスに余裕が生まれ、
+   * 強い AI(Greedy/Expectimax)は Game Over に至らないまま手数が際限なく伸び続けることがある
+   * (issue #17 の5x5盤面で実測: Greedy が5000手時点でも score 111,048 のまま Game Over せず継続)。
+   * ベンチマーク/比較が終わらなくなるのを防ぐための安全弁。
+   */
+  maxMoves?: number;
 }
+
+/** RunBenchmarkOptions.maxMoves の既定値。4x4 の典型的なゲーム(数百〜千手強)には十分な余裕を持たせている */
+const DEFAULT_MAX_MOVES = 3000;
 
 function yieldToEventLoop(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -39,16 +52,24 @@ function yieldToEventLoop(): Promise<void> {
  * 大量実行はローカルの Python 研究環境(Phase 7)を推奨する。
  */
 export async function runBenchmark(options: RunBenchmarkOptions): Promise<BenchmarkSummary> {
-  const { games, createPlayer, seedBase = 1, onProgress, yieldEvery = 1 } = options;
+  const {
+    games,
+    createPlayer,
+    seedBase = 1,
+    onProgress,
+    yieldEvery = 1,
+    boardSize = DEFAULT_BOARD_SIZE,
+    maxMoves = DEFAULT_MAX_MOVES,
+  } = options;
   const results: BenchmarkGameResult[] = [];
   const startTime = performance.now();
 
   for (let i = 0; i < games; i++) {
     const rng = createRng(seedBase + i);
     const player = createPlayer();
-    let state = createInitialState(rng);
+    let state = createInitialState(rng, boardSize);
 
-    while (!state.gameOver) {
+    while (!state.gameOver && state.moveCount < maxMoves) {
       const direction = await player.chooseMove(state.board);
       state = applyMove(state, direction, rng);
     }

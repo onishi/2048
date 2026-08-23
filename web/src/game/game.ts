@@ -1,4 +1,4 @@
-import { createEmptyBoard, getEmptyCells } from "./board";
+import { createEmptyBoard, DEFAULT_BOARD_SIZE, getEmptyCells } from "./board";
 import { isGameOver, move } from "./move";
 import type { Rng } from "./rng";
 import type { Board, Direction, GameState } from "./types";
@@ -16,9 +16,9 @@ export function spawnRandomTile(board: Board, rng: Rng): Board {
   return next;
 }
 
-/** 初期盤面（タイル2つ配置済み）を持つ GameState を生成する */
-export function createInitialState(rng: Rng): GameState {
-  let board = createEmptyBoard();
+/** 初期盤面（タイル2つ配置済み）を持つ GameState を生成する。盤面サイズは可変 (issue #16, #17) */
+export function createInitialState(rng: Rng, boardSize: number = DEFAULT_BOARD_SIZE): GameState {
+  let board = createEmptyBoard(boardSize);
   board = spawnRandomTile(board, rng);
   board = spawnRandomTile(board, rng);
 

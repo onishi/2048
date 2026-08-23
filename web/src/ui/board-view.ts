@@ -1,4 +1,4 @@
-import { BOARD_SIZE } from "../game/board";
+import { boardSizeOf } from "../game/board";
 import { move } from "../game/move";
 import type { Board, Direction, GameState } from "../game/types";
 
@@ -34,14 +34,14 @@ function tileClassName(value: number): string {
   return `tile tile-${value}`;
 }
 
-function lineIndices(direction: Direction): number[][] {
+function lineIndices(direction: Direction, size: number): number[][] {
   const lines: number[][] = [];
 
-  for (let outer = 0; outer < BOARD_SIZE; outer++) {
+  for (let outer = 0; outer < size; outer++) {
     const line: number[] = [];
-    for (let inner = 0; inner < BOARD_SIZE; inner++) {
-      const offset = direction === "right" || direction === "down" ? BOARD_SIZE - 1 - inner : inner;
-      const index = direction === "left" || direction === "right" ? outer * BOARD_SIZE + offset : offset * BOARD_SIZE + outer;
+    for (let inner = 0; inner < size; inner++) {
+      const offset = direction === "right" || direction === "down" ? size - 1 - inner : inner;
+      const index = direction === "left" || direction === "right" ? outer * size + offset : offset * size + outer;
       line.push(index);
     }
     lines.push(line);
@@ -57,8 +57,9 @@ function lineIndices(direction: Direction): number[][] {
 export function calculateTileMotions(board: Board, direction: Direction): TileMotionPlan {
   const motions: TileMotion[] = [];
   const mergedIndices: number[] = [];
+  const size = boardSizeOf(board);
 
-  for (const line of lineIndices(direction)) {
+  for (const line of lineIndices(direction, size)) {
     const tiles = line.flatMap((index) => (board[index] === 0 ? [] : [{ index, value: board[index] }]));
     let sourceOffset = 0;
     let targetOffset = 0;
@@ -83,16 +84,16 @@ export function calculateTileMotions(board: Board, direction: Direction): TileMo
   return { motions, mergedIndices };
 }
 
-function placeOnBoard(element: HTMLElement, index: number): void {
-  element.style.gridRowStart = String(Math.floor(index / BOARD_SIZE) + 1);
-  element.style.gridColumnStart = String((index % BOARD_SIZE) + 1);
+function placeOnBoard(element: HTMLElement, index: number, size: number): void {
+  element.style.gridRowStart = String(Math.floor(index / size) + 1);
+  element.style.gridColumnStart = String((index % size) + 1);
 }
 
-function createTile(value: number, index: number): HTMLDivElement {
+function createTile(value: number, index: number, size: number): HTMLDivElement {
   const tile = document.createElement("div");
   tile.className = tileClassName(value);
   tile.textContent = String(value);
-  placeOnBoard(tile, index);
+  placeOnBoard(tile, index, size);
   return tile;
 }
 
@@ -111,11 +112,15 @@ export function renderBoard(container: HTMLElement, board: Board, transition?: B
   cancelActiveAnimation(container);
   container.innerHTML = "";
 
+  const size = boardSizeOf(board);
+  container.style.setProperty("--board-size", String(size));
+  container.dataset.size = String(size);
+
   const cells: HTMLDivElement[] = [];
-  for (let index = 0; index < BOARD_SIZE * BOARD_SIZE; index++) {
+  for (let index = 0; index < size * size; index++) {
     const cell = document.createElement("div");
     cell.className = "board-cell";
-    placeOnBoard(cell, index);
+    placeOnBoard(cell, index, size);
     cells.push(cell);
     container.appendChild(cell);
   }
@@ -123,7 +128,7 @@ export function renderBoard(container: HTMLElement, board: Board, transition?: B
   const finalTiles = new Map<number, HTMLDivElement>();
   for (const [index, value] of board.entries()) {
     if (value === 0) continue;
-    const tile = createTile(value, index);
+    const tile = createTile(value, index, size);
     finalTiles.set(index, tile);
     container.appendChild(tile);
   }
@@ -152,7 +157,7 @@ export function renderBoard(container: HTMLElement, board: Board, transition?: B
   for (const tile of finalTiles.values()) tile.classList.add("tile-hidden");
 
   const movingTiles = plan.motions.map((motion) => {
-    const tile = createTile(motion.value, motion.fromIndex);
+    const tile = createTile(motion.value, motion.fromIndex, size);
     tile.classList.add("tile-moving");
     tile.setAttribute("aria-hidden", "true");
     container.appendChild(tile);

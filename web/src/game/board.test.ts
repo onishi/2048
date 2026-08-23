@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cloneBoard, createEmptyBoard, getEmptyCells, getMaxTile } from "./board";
+import { boardSizeOf, cloneBoard, createEmptyBoard, getEmptyCells, getMaxTile } from "./board";
 import type { Board } from "./types";
 
 describe("board utilities", () => {
@@ -7,6 +7,16 @@ describe("board utilities", () => {
     const board = createEmptyBoard();
     expect(board).toHaveLength(16);
     expect(board.every((v) => v === 0)).toBe(true);
+  });
+
+  it.each([3, 4, 5])("createEmptyBoard(%i) は size*size マスすべて0 (issue #16, #17)", (size) => {
+    const board = createEmptyBoard(size);
+    expect(board).toHaveLength(size * size);
+    expect(board.every((v) => v === 0)).toBe(true);
+  });
+
+  it.each([3, 4, 5])("boardSizeOf は一辺のマス数を返す", (size) => {
+    expect(boardSizeOf(createEmptyBoard(size))).toBe(size);
   });
 
   it("getEmptyCells は空きマスのインデックスを返す", () => {

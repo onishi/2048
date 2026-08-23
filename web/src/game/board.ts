@@ -1,10 +1,17 @@
 import type { Board } from "./types";
 
-export const BOARD_SIZE = 4;
-export const CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
+/** 盤面サイズは可変 (issue #16, #17)。既定は従来通りの 4x4。 */
+export const DEFAULT_BOARD_SIZE = 4;
+export const MIN_BOARD_SIZE = 3;
+export const MAX_BOARD_SIZE = 5;
 
-export function createEmptyBoard(): Board {
-  return new Array(CELL_COUNT).fill(0);
+/** 一次元配列の長さから一辺のマス数を求める */
+export function boardSizeOf(board: Board): number {
+  return Math.round(Math.sqrt(board.length));
+}
+
+export function createEmptyBoard(size: number = DEFAULT_BOARD_SIZE): Board {
+  return new Array(size * size).fill(0);
 }
 
 export function cloneBoard(board: Board): Board {

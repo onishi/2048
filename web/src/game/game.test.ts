@@ -13,6 +13,12 @@ describe("createInitialState", () => {
     expect(state.moveCount).toBe(0);
     expect(state.gameOver).toBe(false);
   });
+
+  it.each([3, 4, 5])("盤面サイズ %i を指定すると size*size マスの盤面になる (issue #16, #17)", (size) => {
+    const state = createInitialState(createRng(1), size);
+    expect(state.board).toHaveLength(size * size);
+    expect(state.board.filter((v) => v !== 0)).toHaveLength(2);
+  });
 });
 
 describe("spawnRandomTile — SPEC.md #10.4", () => {
