@@ -29,7 +29,7 @@ describe("WorkerExpectimaxPlayer Dynamic Depth — SPEC.md #11.6", () => {
 
     const result = await player.evaluateBoard(board);
 
-    expect(evaluateBoard).toHaveBeenCalledWith(board, 3);
+    expect(evaluateBoard).toHaveBeenCalledWith(board, 3, 2);
     expect(result.depth).toBe(3);
   });
 
@@ -40,7 +40,29 @@ describe("WorkerExpectimaxPlayer Dynamic Depth — SPEC.md #11.6", () => {
 
     const result = await player.evaluateBoard(board);
 
-    expect(evaluateBoard).toHaveBeenCalledWith(board, 6);
+    expect(evaluateBoard).toHaveBeenCalledWith(board, 6, 2);
     expect(result.depth).toBe(6);
+  });
+});
+
+describe("WorkerExpectimaxPlayer startTile — issue #20 のバグ修正", () => {
+  it("開始タイル値を Worker へ送り、3から始めるモードでも正しくシミュレートできるようにする", async () => {
+    const board = new Array(16).fill(0) as Board;
+    const { client, evaluateBoard } = createClient();
+    const player = new WorkerExpectimaxPlayer(client, 4, 3);
+
+    await player.evaluateBoard(board);
+
+    expect(evaluateBoard).toHaveBeenCalledWith(board, 4, 3);
+  });
+
+  it("startTile を省略すると既定値2を送る", async () => {
+    const board = new Array(16).fill(0) as Board;
+    const { client, evaluateBoard } = createClient();
+    const player = new WorkerExpectimaxPlayer(client, 4);
+
+    await player.evaluateBoard(board);
+
+    expect(evaluateBoard).toHaveBeenCalledWith(board, 4, 2);
   });
 });

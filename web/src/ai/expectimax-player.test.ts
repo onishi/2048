@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getValidMoves } from "../game/move";
 import type { Board } from "../game/types";
 import { DYNAMIC_DEPTH, ExpectimaxPlayer, getDynamicDepth, resolveDepth } from "./expectimax-player";
+import { DEFAULT_WEIGHTS } from "./weights";
 
 describe("Dynamic Depth — SPEC.md #11.6", () => {
   it.each([
@@ -99,6 +100,26 @@ describe("ExpectimaxPlayer — SPEC.md #11.5", () => {
     const player = new ExpectimaxPlayer(2);
     const direction = await player.chooseMove(board);
     expect(direction).toBe("left");
+  });
+
+  it("startTile を変えると Chance ノードのシミュレート内容が変わり evaluation も変わる — issue #20 のバグ修正 (以前は 2/4 固定でシミュレートしていた)", () => {
+    const board: Board = [8, 4, 2, 0, 4, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0];
+    const playerStart2 = new ExpectimaxPlayer(3, DEFAULT_WEIGHTS, 2);
+    const playerStart3 = new ExpectimaxPlayer(3, DEFAULT_WEIGHTS, 3);
+
+    const result2 = playerStart2.evaluateBoard(board);
+    const result3 = playerStart3.evaluateBoard(board);
+
+    // startTile が Chance ノードの placeTile() に反映されていれば、
+    // 空きマスに置かれる値(2/4 と 3/6)が異なるため evaluation も一致しないはずである
+    expect(result3.evaluation).not.toBeCloseTo(result2.evaluation, 5);
+  });
+
+  it("3から始めるモードの盤面でも有効な手の中から選ぶ (issue #20)", async () => {
+    const board: Board = [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const player = new ExpectimaxPlayer(2, DEFAULT_WEIGHTS, 3);
+    const direction = await player.chooseMove(board);
+    expect(getValidMoves(board)).toContain(direction);
   });
 
   it("空きマスが多い盤面でも Chance Sampling により現実的な時間で完了する", () => {

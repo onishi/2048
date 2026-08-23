@@ -62,11 +62,11 @@ export class AiWorkerClient {
     }
   }
 
-  evaluateBoard(board: Board, depth: number): Promise<AiWorkerResult> {
+  evaluateBoard(board: Board, depth: number, startTile: number): Promise<AiWorkerResult> {
     const id = `req-${++requestCounter}`;
     this.latestRequestId = id;
 
-    const request: AIRequest = { type: "choose-move", id, board, depth };
+    const request: AIRequest = { type: "choose-move", id, board, depth, startTile };
 
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });

@@ -1,3 +1,4 @@
+import { DEFAULT_START_TILE } from "../game/game";
 import type { Board, Direction } from "../game/types";
 import type { AiWorkerClient, AiWorkerResult } from "../worker/ai-worker-client";
 import { DEFAULT_DEPTH, resolveDepth, type DepthSetting } from "./expectimax-player";
@@ -12,6 +13,8 @@ export class WorkerExpectimaxPlayer implements Player {
   constructor(
     private readonly client: AiWorkerClient,
     private readonly depth: DepthSetting = DEFAULT_DEPTH,
+    /** 3から始めるモード (issue #20) でも正しくシミュレートするための開始タイル値 */
+    private readonly startTile: number = DEFAULT_START_TILE,
   ) {}
 
   async chooseMove(board: Board): Promise<Direction> {
@@ -21,6 +24,6 @@ export class WorkerExpectimaxPlayer implements Player {
 
   /** UI 側で Evaluation/Nodes/Time を表示する際に使う (SPEC.md #8.2) */
   evaluateBoard(board: Board): Promise<AiWorkerResult> {
-    return this.client.evaluateBoard(board, resolveDepth(board, this.depth));
+    return this.client.evaluateBoard(board, resolveDepth(board, this.depth), this.startTile);
   }
 }

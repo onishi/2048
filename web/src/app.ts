@@ -281,7 +281,7 @@ export class App {
       case "random":
         return new RandomPlayer(this.rng);
       case "expectimax":
-        return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth);
+        return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth, this.startTile);
       case "neural":
         return new NeuralPlayer();
       case "greedy":
@@ -329,7 +329,7 @@ export class App {
         return new RandomPlayer(createRandomRng());
       case "expectimax":
         if (!workerClient) throw new Error("workerClient is required for Expectimax");
-        return new WorkerExpectimaxPlayer(workerClient, this.depth);
+        return new WorkerExpectimaxPlayer(workerClient, this.depth, this.startTile);
       case "neural":
         return new NeuralPlayer();
       case "greedy":
