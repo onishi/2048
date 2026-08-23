@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../game/rng";
+import { GreedyPlayer } from "./greedy-player";
 import { RandomPlayer } from "./random-player";
 import { runBenchmark } from "./benchmark";
 
@@ -47,5 +48,30 @@ describe("runBenchmark — SPEC.md #14.4", () => {
       [2, 3],
       [3, 3],
     ]);
+  });
+
+  it("boardSize を指定すると指定サイズの盤面でゲームを実行する (issue #16, #17)", async () => {
+    const summary = await runBenchmark({
+      games: 3,
+      boardSize: 3,
+      createPlayer: () => new RandomPlayer(createRng(1)),
+    });
+
+    expect(summary.games).toBe(3);
+    expect(summary.results).toHaveLength(3);
+    expect(Object.values(summary.tileDistribution).reduce((a, b) => a + b, 0)).toBe(3);
+  });
+
+  it("maxMoves に達したら Game Over でなくてもゲームを打ち切る (issue #17)", async () => {
+    // 大きい盤面では強い AI が Game Over に至らないまま手数が伸び続けることがあるため、
+    // 安全弁として動作することを確認する。
+    const summary = await runBenchmark({
+      games: 1,
+      boardSize: 5,
+      maxMoves: 10,
+      createPlayer: () => new GreedyPlayer(),
+    });
+
+    expect(summary.results[0].moveCount).toBeLessThanOrEqual(10);
   });
 });

@@ -113,6 +113,32 @@ describe("evaluate — SPEC.md #12.1 の符号規約", () => {
   });
 });
 
+describe("盤面サイズの可変対応 — issue #16, #17", () => {
+  it("3x3 でも角に最大タイルがあればコーナーボーナスが付く", () => {
+    const board: Board = [512, 0, 0, 0, 0, 0, 0, 0, 0];
+    expect(cornerBonus(board)).toBe(512);
+  });
+
+  it("5x5 でも角に最大タイルがなければコーナーボーナスは0", () => {
+    const board: Board = new Array(25).fill(0);
+    board[12] = 512; // 中央
+    expect(cornerBonus(board)).toBe(0);
+  });
+
+  it("3x3 の snakeScore は先頭マスほど重みが大きい (左上 > 右下)", () => {
+    const topLeft: Board = [2, 0, 0, 0, 0, 0, 0, 0, 0];
+    const bottomRight: Board = [0, 0, 0, 0, 0, 0, 0, 0, 2];
+    expect(snakeScore(topLeft)).toBeGreaterThan(snakeScore(bottomRight));
+  });
+
+  it("5x5 でも evaluate() が有限の数値を返す", () => {
+    const board: Board = new Array(25).fill(0);
+    board[0] = 1024;
+    board[24] = 2;
+    expect(Number.isFinite(evaluate(board, DEFAULT_WEIGHTS))).toBe(true);
+  });
+});
+
 describe("evaluateWithBreakdown — SPEC.md #14.2 Evaluator Breakdown", () => {
   it("内訳の合計が evaluate() の返り値と一致する", () => {
     const board: Board = [

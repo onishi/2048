@@ -1,11 +1,11 @@
-import { BOARD_SIZE } from "./board";
-import { boardsEqual } from "./board";
+import { boardSizeOf, boardsEqual } from "./board";
 import type { Board, Direction, MoveResult } from "./types";
 
 function rowsFromBoard(board: Board): number[][] {
+  const size = boardSizeOf(board);
   const rows: number[][] = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    rows.push(board.slice(r * BOARD_SIZE, r * BOARD_SIZE + BOARD_SIZE));
+  for (let r = 0; r < size; r++) {
+    rows.push(board.slice(r * size, r * size + size));
   }
   return rows;
 }

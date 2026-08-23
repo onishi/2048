@@ -209,9 +209,10 @@ body {
 }
 
 .board {
+  --board-size: 4;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--board-size), 1fr);
+  grid-template-rows: repeat(var(--board-size), 1fr);
   gap: 10px;
   background: var(--board-bg);
   border-radius: 8px;
@@ -219,6 +220,16 @@ body {
   aspect-ratio: 1 / 1;
   touch-action: none;
   user-select: none;
+  font-size: 1rem;
+}
+
+/* 盤面サイズが変わってもタイル文字が読みやすい大きさになるよう調整する (issue #16, #17) */
+.board[data-size="3"] {
+  font-size: 1.2rem;
+}
+
+.board[data-size="5"] {
+  font-size: 0.8rem;
 }
 
 .board-cell {
@@ -236,7 +247,7 @@ body {
   min-height: 0;
   border-radius: 4px;
   font-weight: 700;
-  font-size: clamp(1rem, 6vw, 2rem);
+  font-size: clamp(1em, 6vw, 2em);
   background: var(--tile-empty);
   z-index: 1;
   pointer-events: none;
@@ -286,32 +297,32 @@ body {
 .tile-128 {
   background: var(--tile-128-bg);
   color: var(--tile-128-fg);
-  font-size: clamp(0.9rem, 5vw, 1.7rem);
+  font-size: clamp(0.9em, 5vw, 1.7em);
 }
 .tile-256 {
   background: var(--tile-256-bg);
   color: var(--tile-256-fg);
-  font-size: clamp(0.9rem, 5vw, 1.7rem);
+  font-size: clamp(0.9em, 5vw, 1.7em);
 }
 .tile-512 {
   background: var(--tile-512-bg);
   color: var(--tile-512-fg);
-  font-size: clamp(0.9rem, 5vw, 1.7rem);
+  font-size: clamp(0.9em, 5vw, 1.7em);
 }
 .tile-1024 {
   background: var(--tile-1024-bg);
   color: var(--tile-1024-fg);
-  font-size: clamp(0.8rem, 4.5vw, 1.4rem);
+  font-size: clamp(0.8em, 4.5vw, 1.4em);
 }
 .tile-2048 {
   background: var(--tile-2048-bg);
   color: var(--tile-2048-fg);
-  font-size: clamp(0.8rem, 4.5vw, 1.4rem);
+  font-size: clamp(0.8em, 4.5vw, 1.4em);
 }
 .tile-super {
   background: var(--tile-super-bg);
   color: var(--tile-super-fg);
-  font-size: clamp(0.7rem, 4vw, 1.2rem);
+  font-size: clamp(0.7em, 4vw, 1.2em);
 }
 
 .ai-bar {

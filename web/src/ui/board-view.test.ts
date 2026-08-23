@@ -97,6 +97,21 @@ describe("renderBoard", () => {
     expect(container.querySelector(".tile-4")?.getAttribute("style")).toContain("grid-column-start: 3");
   });
 
+  it.each([3, 5])("%ix%i 盤面でも size*size セルを描画し data-size を設定する (issue #16, #17)", (size) => {
+    const container = document.createElement("div");
+    const board: Board = new Array(size * size).fill(0);
+    board[0] = 2;
+    board[size * size - 1] = 4;
+
+    renderBoard(container, board);
+
+    expect(container.dataset.size).toBe(String(size));
+    expect(container.style.getPropertyValue("--board-size")).toBe(String(size));
+    expect(container.querySelectorAll(".board-cell")).toHaveLength(size * size);
+    expect(container.querySelector(".tile-4")?.getAttribute("style")).toContain(`grid-row-start: ${size}`);
+    expect(container.querySelector(".tile-4")?.getAttribute("style")).toContain(`grid-column-start: ${size}`);
+  });
+
   it("移動タイルの完了後に結合タイルと新規タイルを表示する", async () => {
     const animate = vi.fn(() => ({
       cancel: vi.fn(),
