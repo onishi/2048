@@ -16,6 +16,7 @@ import { NeuralPlayer } from "./model/neural-player";
 import { renderBoard, renderMessage, renderScore, type BoardAnimation } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
 import { renderAiStats, renderBenchmarkResults, renderComparisonResults, type AiStatsData } from "./ui/stats";
+import { applyTheme, loadStoredTheme, THEMES, THEME_LABELS, type Theme } from "./ui/theme";
 import { AiWorkerClient } from "./worker/ai-worker-client";
 
 const MAX_BENCHMARK_GAMES = 200;
@@ -38,14 +39,19 @@ const TEMPLATE = `
   <div class="game">
     <header class="game-header">
       <h1>2048 AI</h1>
-      <div class="scores">
-        <div class="score-box">
-          <span class="label">Score</span>
-          <span class="value" id="score">0</span>
-        </div>
-        <div class="score-box">
-          <span class="label">Max Tile</span>
-          <span class="value" id="max-tile">0</span>
+      <div class="header-right">
+        <select id="theme-select" class="theme-select" aria-label="Theme">
+          ${THEMES.map((theme) => `<option value="${theme}">${THEME_LABELS[theme]}</option>`).join("")}
+        </select>
+        <div class="scores">
+          <div class="score-box">
+            <span class="label">Score</span>
+            <span class="value" id="score">0</span>
+          </div>
+          <div class="score-box">
+            <span class="label">Max Tile</span>
+            <span class="value" id="max-tile">0</span>
+          </div>
         </div>
       </div>
     </header>
@@ -112,6 +118,7 @@ export class App {
   private readonly scoreEl: HTMLElement;
   private readonly maxTileEl: HTMLElement;
   private readonly messageEl: HTMLElement;
+  private readonly themeSelectEl: HTMLSelectElement;
   private readonly aiSelectEl: HTMLSelectElement;
   private readonly depthSelectEl: HTMLSelectElement;
   private readonly speedSelectEl: HTMLSelectElement;
@@ -141,6 +148,7 @@ export class App {
     this.scoreEl = this.query("#score");
     this.maxTileEl = this.query("#max-tile");
     this.messageEl = this.query("#message");
+    this.themeSelectEl = this.query<HTMLSelectElement>("#theme-select");
     this.aiSelectEl = this.query<HTMLSelectElement>("#ai-select");
     this.depthSelectEl = this.query<HTMLSelectElement>("#depth-select");
     this.speedSelectEl = this.query<HTMLSelectElement>("#speed-select");
@@ -153,10 +161,17 @@ export class App {
     this.comparisonButtonEl = this.query<HTMLButtonElement>("#comparison-button");
     this.comparisonResultsEl = this.query("#comparison-results");
 
+    const initialTheme = loadStoredTheme();
+    applyTheme(initialTheme);
+    this.themeSelectEl.value = initialTheme;
+
     this.state = createInitialState(this.rng);
     this.render();
 
     attachControls(this.boardEl, (direction) => this.handleMove(direction));
+    this.themeSelectEl.addEventListener("change", () => {
+      applyTheme(this.themeSelectEl.value as Theme);
+    });
     this.query<HTMLButtonElement>("#reset-button").addEventListener("click", () => this.reset());
     this.query<HTMLButtonElement>("#ai-move-button").addEventListener("click", () => this.handleAiMove());
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
