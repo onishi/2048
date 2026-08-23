@@ -161,21 +161,6 @@ body {
   margin: 0;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.theme-select {
-  border-radius: 6px;
-  border: 1px solid var(--board-bg);
-  background: var(--bg);
-  color: var(--text);
-  padding: 4px 8px;
-  font-size: 0.85rem;
-}
-
 .scores {
   display: flex;
   gap: 8px;
@@ -602,8 +587,12 @@ body {
 
   .game {
     width: 100vw;
-    padding: 10px;
-    gap: 8px;
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .advanced {
+    padding: 8px 12px;
   }
 
   .game-header h1 {
@@ -613,15 +602,6 @@ body {
   .score-box {
     min-width: 52px;
     padding: 4px 10px;
-  }
-
-  .header-right {
-    gap: 6px;
-  }
-
-  .theme-select {
-    padding: 4px 6px;
-    font-size: 0.75rem;
   }
 
   .ai-bar {
@@ -641,8 +621,8 @@ body {
   }
 
   .action-bar button {
-    flex: 1 1 30%;
-    padding: 10px 6px;
-    font-size: 0.85rem;
+    flex: 1 1 21%;
+    padding: 8px 4px;
+    font-size: 0.78rem;
   }
 }
