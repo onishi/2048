@@ -8,9 +8,10 @@ import type { Player } from "./ai/player";
 import { RandomPlayer } from "./ai/random-player";
 import { WorkerExpectimaxPlayer } from "./ai/worker-expectimax-player";
 import { DEFAULT_WEIGHTS } from "./ai/weights";
-import { DEFAULT_BOARD_SIZE, MAX_BOARD_SIZE, MIN_BOARD_SIZE } from "./game/board";
+import { boardSizeOf, DEFAULT_BOARD_SIZE, MAX_BOARD_SIZE, MIN_BOARD_SIZE } from "./game/board";
 import { applyMove, createInitialState, DEFAULT_START_TILE } from "./game/game";
 import { move } from "./game/move";
+import { loadGameState, saveGameState } from "./game/persistence";
 import { createRandomRng } from "./game/rng";
 import type { Board, Direction, GameState } from "./game/types";
 import { NeuralPlayer } from "./model/neural-player";
@@ -202,7 +203,19 @@ export class App {
     applyTheme(initialTheme);
     this.themeSelectEl.value = initialTheme;
 
-    this.state = createInitialState(this.rng, this.boardSize, this.startTile);
+    // issue #24: 前回の場面が保存されていれば復元する。盤面サイズ・開始タイルも盤面から読み取る
+    const savedState = loadGameState();
+    if (savedState) {
+      this.state = savedState;
+      this.boardSize = boardSizeOf(savedState.board);
+      this.startTile = savedState.startTile;
+      this.boardSizeSelectEl.value = String(this.boardSize);
+      this.startTileSelectEl.value = String(this.startTile);
+      this.updateNeuralAvailability();
+    } else {
+      this.state = createInitialState(this.rng, this.boardSize, this.startTile);
+      saveGameState(this.state);
+    }
     this.render();
 
     attachControls(this.boardEl, (direction) => this.handleMove(direction));
@@ -500,9 +513,15 @@ export class App {
       .catch(() => this.stopAutoPlay());
   }
 
+  /** state を更新し、issue #24 のためにリロードをまたいで復元できるよう保存する */
+  private setState(next: GameState): void {
+    this.state = next;
+    saveGameState(next);
+  }
+
   private reset(): void {
     this.stopAutoPlay();
-    this.state = createInitialState(this.rng, this.boardSize, this.startTile);
+    this.setState(createInitialState(this.rng, this.boardSize, this.startTile));
     this.aiSuggestionEl.textContent = "";
     this.clearAiStats();
     this.render();
@@ -513,7 +532,7 @@ export class App {
     const nextState = applyMove(previousState, direction, this.rng);
     if (nextState === previousState) return;
 
-    this.state = nextState;
+    this.setState(nextState);
     const animation: BoardAnimation | undefined =
       animationDurationMs === null
         ? undefined
