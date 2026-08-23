@@ -53,19 +53,14 @@ const TEMPLATE = `
   <div class="game">
     <header class="game-header">
       <h1>2048 AI</h1>
-      <div class="header-right">
-        <select id="theme-select" class="theme-select" aria-label="Theme">
-          ${THEMES.map((theme) => `<option value="${theme}">${THEME_LABELS[theme]}</option>`).join("")}
-        </select>
-        <div class="scores">
-          <div class="score-box">
-            <span class="label">Score</span>
-            <span class="value" id="score">0</span>
-          </div>
-          <div class="score-box">
-            <span class="label">Max Tile</span>
-            <span class="value" id="max-tile">0</span>
-          </div>
+      <div class="scores">
+        <div class="score-box">
+          <span class="label">Score</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="score-box">
+          <span class="label">Max Tile</span>
+          <span class="value" id="max-tile">0</span>
         </div>
       </div>
     </header>
@@ -74,24 +69,6 @@ const TEMPLATE = `
       <div class="message" id="message"></div>
     </div>
     <div class="ai-bar">
-      <label class="ai-select-label">
-        Size:
-        <select id="board-size-select">
-          ${BOARD_SIZE_OPTIONS.map(
-            (size) =>
-              `<option value="${size}"${size === DEFAULT_BOARD_SIZE ? " selected" : ""}>${size}×${size}</option>`,
-          ).join("")}
-        </select>
-      </label>
-      <label class="ai-select-label">
-        Start:
-        <select id="start-tile-select">
-          ${START_TILE_OPTIONS.map(
-            ({ value, label }) =>
-              `<option value="${value}"${value === DEFAULT_START_TILE ? " selected" : ""}>${label}</option>`,
-          ).join("")}
-        </select>
-      </label>
       <label class="ai-select-label">
         AI:
         <select id="ai-select">
@@ -128,6 +105,35 @@ const TEMPLATE = `
     </div>
     <p class="ai-suggestion" id="ai-suggestion"></p>
     <div class="ai-stats" id="ai-stats"></div>
+    <details class="advanced">
+      <summary>Game Settings</summary>
+      <div class="ai-bar">
+        <label class="ai-select-label">
+          Size:
+          <select id="board-size-select">
+            ${BOARD_SIZE_OPTIONS.map(
+              (size) =>
+                `<option value="${size}"${size === DEFAULT_BOARD_SIZE ? " selected" : ""}>${size}×${size}</option>`,
+            ).join("")}
+          </select>
+        </label>
+        <label class="ai-select-label">
+          Start:
+          <select id="start-tile-select">
+            ${START_TILE_OPTIONS.map(
+              ({ value, label }) =>
+                `<option value="${value}"${value === DEFAULT_START_TILE ? " selected" : ""}>${label}</option>`,
+            ).join("")}
+          </select>
+        </label>
+        <label class="ai-select-label">
+          Theme:
+          <select id="theme-select">
+            ${THEMES.map((theme) => `<option value="${theme}">${THEME_LABELS[theme]}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+    </details>
     <details class="advanced">
       <summary>Benchmark / Compare AIs</summary>
       <div class="benchmark-bar">
