@@ -49,10 +49,11 @@ describe("AiWorkerClient — SPEC.md #13", () => {
     const client = new AiWorkerClient();
     const worker = FakeWorker.instances[0];
 
-    const promise = client.evaluateBoard(BOARD, 3);
+    const promise = client.evaluateBoard(BOARD, 3, 2);
     expect(worker.posted).toHaveLength(1);
     expect(worker.posted[0].type).toBe("choose-move");
     expect(worker.posted[0].depth).toBe(3);
+    expect(worker.posted[0].startTile).toBe(2);
 
     worker.respond({
       type: "move-result",
@@ -76,9 +77,9 @@ describe("AiWorkerClient — SPEC.md #13", () => {
     const client = new AiWorkerClient();
     const worker = FakeWorker.instances[0];
 
-    const firstPromise = client.evaluateBoard(BOARD, 3);
+    const firstPromise = client.evaluateBoard(BOARD, 3, 2);
     const firstId = worker.posted[0].id;
-    const secondPromise = client.evaluateBoard(BOARD, 3);
+    const secondPromise = client.evaluateBoard(BOARD, 3, 2);
     const secondId = worker.posted[1].id;
 
     // 古いリクエスト(first)のレスポンスが後から届いても無視される
@@ -117,7 +118,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
     const client = new AiWorkerClient();
     const worker = FakeWorker.instances[0];
 
-    const promise = client.evaluateBoard(BOARD, 3);
+    const promise = client.evaluateBoard(BOARD, 3, 2);
     client.cancel();
 
     await expect(promise).rejects.toThrow();
@@ -130,7 +131,7 @@ describe("AiWorkerClient — SPEC.md #13", () => {
     client.cancel();
     const newWorker = FakeWorker.instances[1];
 
-    const promise = client.evaluateBoard(BOARD, 4);
+    const promise = client.evaluateBoard(BOARD, 4, 2);
     expect(newWorker.posted).toHaveLength(1);
 
     newWorker.respond({

@@ -17,7 +17,7 @@ ctx.onmessage = (event) => {
   const request = event.data;
   if (request.type !== "choose-move") return;
 
-  const player = new ExpectimaxPlayer(request.depth);
+  const player = new ExpectimaxPlayer(request.depth, undefined, request.startTile);
   const result = player.evaluateBoard(request.board);
 
   const response: AIResponse = {

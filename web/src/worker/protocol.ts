@@ -6,6 +6,8 @@ export interface AIRequest {
   id: string;
   board: Board;
   depth: number;
+  /** 3から始めるモード (issue #20) でも正しくシミュレートするための開始タイル値 */
+  startTile: number;
 }
 
 /** Worker → メインスレッド (SPEC.md #13.1) */

@@ -1,13 +1,14 @@
 import { getEmptyCells, serializeBoard } from "../game/board";
+import { DEFAULT_START_TILE } from "../game/game";
 import { getValidMoves, isGameOver, move } from "../game/move";
 import type { Board, Direction } from "../game/types";
 import { evaluate } from "./evaluator";
 import type { Player } from "./player";
 import { DEFAULT_WEIGHTS, type EvaluationWeights } from "./weights";
 
-/** タイル生成確率 (SPEC.md #10.4) */
-const TILE_2_PROBABILITY = 0.9;
-const TILE_4_PROBABILITY = 0.1;
+/** タイル生成確率 (SPEC.md #10.4)。開始タイル値: 90%、その2倍: 10% */
+const TILE_BASE_PROBABILITY = 0.9;
+const TILE_DOUBLE_PROBABILITY = 0.1;
 
 /** SPEC.md #11.6: デフォルトの探索深度 */
 export const DEFAULT_DEPTH = 4;
@@ -70,6 +71,8 @@ export class ExpectimaxPlayer implements Player {
   constructor(
     private readonly depth: number = DEFAULT_DEPTH,
     private readonly weights: EvaluationWeights = DEFAULT_WEIGHTS,
+    /** 3から始めるモード (issue #20) でも正しくシミュレートするための開始タイル値 */
+    private readonly startTile: number = DEFAULT_START_TILE,
   ) {}
 
   async chooseMove(board: Board): Promise<Direction> {
@@ -152,11 +155,11 @@ export class ExpectimaxPlayer implements Player {
     let expected = 0;
     for (const cell of sampledCells) {
       expected +=
-        (TILE_2_PROBABILITY / sampledCells.length) *
-        this.expectimax(placeTile(board, cell, 2), depth - 1, "max");
+        (TILE_BASE_PROBABILITY / sampledCells.length) *
+        this.expectimax(placeTile(board, cell, this.startTile), depth - 1, "max");
       expected +=
-        (TILE_4_PROBABILITY / sampledCells.length) *
-        this.expectimax(placeTile(board, cell, 4), depth - 1, "max");
+        (TILE_DOUBLE_PROBABILITY / sampledCells.length) *
+        this.expectimax(placeTile(board, cell, this.startTile * 2), depth - 1, "max");
     }
     return expected;
   }
