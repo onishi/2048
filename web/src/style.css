@@ -5,6 +5,110 @@
   --board-bg: #bbada0;
   --cell-bg: rgba(238, 228, 218, 0.35);
   --tile-empty: rgba(238, 228, 218, 0.35);
+  --accent: #f65e3b;
+  --message-bg: rgba(238, 228, 218, 0.7);
+  --panel-bg: rgba(238, 228, 218, 0.5);
+
+  --tile-2-bg: #eee4da;
+  --tile-2-fg: #776e65;
+  --tile-4-bg: #ede0c8;
+  --tile-4-fg: #776e65;
+  --tile-8-bg: #f2b179;
+  --tile-8-fg: #f9f6f2;
+  --tile-16-bg: #f59563;
+  --tile-16-fg: #f9f6f2;
+  --tile-32-bg: #f67c5f;
+  --tile-32-fg: #f9f6f2;
+  --tile-64-bg: #f65e3b;
+  --tile-64-fg: #f9f6f2;
+  --tile-128-bg: #edcf72;
+  --tile-128-fg: #f9f6f2;
+  --tile-256-bg: #edcc61;
+  --tile-256-fg: #f9f6f2;
+  --tile-512-bg: #edc850;
+  --tile-512-fg: #f9f6f2;
+  --tile-1024-bg: #edc53f;
+  --tile-1024-fg: #f9f6f2;
+  --tile-2048-bg: #edc22e;
+  --tile-2048-fg: #f9f6f2;
+  --tile-super-bg: #3c3a32;
+  --tile-super-fg: #f9f6f2;
+}
+
+/* Sci-Fi テーマ (issue #18): 深宇宙の暗さ + ネオングロー */
+[data-theme="scifi"] {
+  color-scheme: dark;
+  --bg: #060a16;
+  --text: #cfe8ff;
+  --board-bg: #131b2e;
+  --cell-bg: rgba(56, 189, 248, 0.08);
+  --tile-empty: rgba(56, 189, 248, 0.08);
+  --accent: #38bdf8;
+  --message-bg: rgba(6, 10, 22, 0.82);
+  --panel-bg: rgba(19, 27, 46, 0.6);
+
+  --tile-2-bg: #16233a;
+  --tile-2-fg: #8ecdfb;
+  --tile-4-bg: #172a47;
+  --tile-4-fg: #7dd3fc;
+  --tile-8-bg: #1d3a5f;
+  --tile-8-fg: #38bdf8;
+  --tile-16-bg: #24487a;
+  --tile-16-fg: #60a5fa;
+  --tile-32-bg: #33409a;
+  --tile-32-fg: #a5b4fc;
+  --tile-64-bg: #55329c;
+  --tile-64-fg: #d8b4fe;
+  --tile-128-bg: #7c2d92;
+  --tile-128-fg: #f0abfc;
+  --tile-256-bg: #9d2f86;
+  --tile-256-fg: #fbcfe8;
+  --tile-512-bg: #c62a6b;
+  --tile-512-fg: #ffe4e6;
+  --tile-1024-bg: #e0294f;
+  --tile-1024-fg: #fff1f2;
+  --tile-2048-bg: #f5c518;
+  --tile-2048-fg: #1a1408;
+  --tile-super-bg: #f5f7ff;
+  --tile-super-fg: #060a16;
+}
+
+/* Nature テーマ (issue #18): 新緑の芽吹きから紅葉・開花へ */
+[data-theme="nature"] {
+  color-scheme: light;
+  --bg: #f4f7ec;
+  --text: #35492b;
+  --board-bg: #9caf7c;
+  --cell-bg: rgba(228, 236, 210, 0.45);
+  --tile-empty: rgba(228, 236, 210, 0.45);
+  --accent: #e07a3f;
+  --message-bg: rgba(228, 236, 210, 0.75);
+  --panel-bg: rgba(228, 236, 210, 0.5);
+
+  --tile-2-bg: #eef3e1;
+  --tile-2-fg: #4a5d3a;
+  --tile-4-bg: #dbe8c4;
+  --tile-4-fg: #3f5233;
+  --tile-8-bg: #b8d896;
+  --tile-8-fg: #2f4224;
+  --tile-16-bg: #93c46d;
+  --tile-16-fg: #26361c;
+  --tile-32-bg: #6fae72;
+  --tile-32-fg: #f4f9ee;
+  --tile-64-bg: #4c9a6a;
+  --tile-64-fg: #f4f9ee;
+  --tile-128-bg: #d9a521;
+  --tile-128-fg: #33270a;
+  --tile-256-bg: #e08a1e;
+  --tile-256-fg: #33220a;
+  --tile-512-bg: #d9662a;
+  --tile-512-fg: #fff3e8;
+  --tile-1024-bg: #b8452b;
+  --tile-1024-fg: #fff3e8;
+  --tile-2048-bg: #e0457b;
+  --tile-2048-fg: #fff0f6;
+  --tile-super-bg: #5c2a4d;
+  --tile-super-fg: #f8ecf5;
 }
 
 * {
@@ -24,6 +128,9 @@ body {
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -52,6 +159,21 @@ body {
 .game-header h1 {
   font-size: 2rem;
   margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-select {
+  border-radius: 6px;
+  border: 1px solid var(--board-bg);
+  background: var(--bg);
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 0.85rem;
 }
 
 .scores {
@@ -138,57 +260,57 @@ body {
 }
 
 .tile-2 {
-  background: #eee4da;
-  color: #776e65;
+  background: var(--tile-2-bg);
+  color: var(--tile-2-fg);
 }
 .tile-4 {
-  background: #ede0c8;
-  color: #776e65;
+  background: var(--tile-4-bg);
+  color: var(--tile-4-fg);
 }
 .tile-8 {
-  background: #f2b179;
-  color: #f9f6f2;
+  background: var(--tile-8-bg);
+  color: var(--tile-8-fg);
 }
 .tile-16 {
-  background: #f59563;
-  color: #f9f6f2;
+  background: var(--tile-16-bg);
+  color: var(--tile-16-fg);
 }
 .tile-32 {
-  background: #f67c5f;
-  color: #f9f6f2;
+  background: var(--tile-32-bg);
+  color: var(--tile-32-fg);
 }
 .tile-64 {
-  background: #f65e3b;
-  color: #f9f6f2;
+  background: var(--tile-64-bg);
+  color: var(--tile-64-fg);
 }
 .tile-128 {
-  background: #edcf72;
-  color: #f9f6f2;
+  background: var(--tile-128-bg);
+  color: var(--tile-128-fg);
   font-size: clamp(0.9rem, 5vw, 1.7rem);
 }
 .tile-256 {
-  background: #edcc61;
-  color: #f9f6f2;
+  background: var(--tile-256-bg);
+  color: var(--tile-256-fg);
   font-size: clamp(0.9rem, 5vw, 1.7rem);
 }
 .tile-512 {
-  background: #edc850;
-  color: #f9f6f2;
+  background: var(--tile-512-bg);
+  color: var(--tile-512-fg);
   font-size: clamp(0.9rem, 5vw, 1.7rem);
 }
 .tile-1024 {
-  background: #edc53f;
-  color: #f9f6f2;
+  background: var(--tile-1024-bg);
+  color: var(--tile-1024-fg);
   font-size: clamp(0.8rem, 4.5vw, 1.4rem);
 }
 .tile-2048 {
-  background: #edc22e;
-  color: #f9f6f2;
+  background: var(--tile-2048-bg);
+  color: var(--tile-2048-fg);
   font-size: clamp(0.8rem, 4.5vw, 1.4rem);
 }
 .tile-super {
-  background: #3c3a32;
-  color: #f9f6f2;
+  background: var(--tile-super-bg);
+  color: var(--tile-super-fg);
   font-size: clamp(0.7rem, 4vw, 1.2rem);
 }
 
@@ -261,11 +383,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(238, 228, 218, 0.7);
+  background: var(--message-bg);
   border-radius: 8px;
   font-size: 1.8rem;
   font-weight: 700;
-  color: #776e65;
+  color: var(--text);
   visibility: hidden;
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -305,7 +427,8 @@ body {
     animation: none;
   }
 
-  .message {
+  .message,
+  body {
     transition: none;
   }
 }
@@ -314,7 +437,7 @@ body {
   display: none;
   flex-direction: column;
   gap: 8px;
-  background: rgba(238, 228, 218, 0.5);
+  background: var(--panel-bg);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.85rem;
@@ -337,7 +460,7 @@ body {
 
 .ai-stats .action-values tr.best {
   font-weight: 700;
-  color: #f65e3b;
+  color: var(--accent);
 }
 
 .ai-stats .search-stats {
@@ -370,7 +493,7 @@ body {
 }
 
 .advanced {
-  background: rgba(238, 228, 218, 0.5);
+  background: var(--panel-bg);
   border-radius: 8px;
   padding: 10px 12px;
 }
@@ -429,7 +552,7 @@ body {
 .benchmark-results {
   margin: 0;
   padding: 10px 12px;
-  background: rgba(238, 228, 218, 0.5);
+  background: var(--panel-bg);
   border-radius: 8px;
   font-size: 0.85rem;
   white-space: pre-wrap;
@@ -437,7 +560,7 @@ body {
 }
 
 .comparison-results:not(:empty) {
-  background: rgba(238, 228, 218, 0.5);
+  background: var(--panel-bg);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.85rem;
@@ -479,6 +602,15 @@ body {
   .score-box {
     min-width: 52px;
     padding: 4px 10px;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .theme-select {
+    padding: 4px 6px;
+    font-size: 0.75rem;
   }
 
   .ai-bar {
