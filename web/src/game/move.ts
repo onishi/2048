@@ -1,97 +1,99 @@
 import { boardSizeOf, boardsEqual } from "./board";
 import type { Board, Direction, MoveResult } from "./types";
 
-function rowsFromBoard(board: Board): number[][] {
-  const size = boardSizeOf(board);
-  const rows: number[][] = [];
-  for (let r = 0; r < size; r++) {
-    rows.push(board.slice(r * size, r * size + size));
-  }
-  return rows;
-}
-
-function boardFromRows(rows: number[][]): Board {
-  return rows.flat();
-}
-
-function transpose(rows: number[][]): number[][] {
-  const size = rows.length;
-  const result: number[][] = Array.from({ length: size }, () => new Array<number>(size).fill(0));
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      result[c][r] = rows[r][c];
-    }
-  }
-  return result;
-}
-
 /**
- * 1行を左方向へスライド・マージする (SPEC.md #10.2)。
- * 同ターン中に生成された結合後タイルは再結合しない (No Double Merge)。
+ * 指定方向で1ラインを構成する盤面インデックスを、タイルが詰まっていく先頭から順に返す。
+ * 例えば size=4, direction="left" なら各行を [0,1,2,3] のように先頭(左)から並べ、
+ * direction="right" なら [3,2,1,0] のように末尾(右)から並べる。
+ * 盤面サイズ・方向の組だけで決まり盤面の値には依存しないため、(size, direction) ごとにキャッシュする
+ * (move() のホットパスで呼ばれるたびに再計算しないための最適化)。
  */
-function mergeRowLeft(row: number[]): { row: number[]; scoreDelta: number } {
-  const values = row.filter((value) => value !== 0);
-  const merged: number[] = [];
-  let scoreDelta = 0;
-  let i = 0;
-  while (i < values.length) {
-    const current = values[i];
-    const next = values[i + 1];
-    if (next !== undefined && current === next) {
-      const mergedValue = current * 2;
-      merged.push(mergedValue);
-      scoreDelta += mergedValue;
-      i += 2;
-    } else {
-      merged.push(current);
-      i += 1;
+const lineIndicesCache = new Map<string, number[][]>();
+
+export function lineIndices(direction: Direction, size: number): number[][] {
+  const cacheKey = `${size}:${direction}`;
+  const cached = lineIndicesCache.get(cacheKey);
+  if (cached) return cached;
+
+  const lines: number[][] = [];
+  for (let outer = 0; outer < size; outer++) {
+    const line: number[] = new Array(size);
+    for (let inner = 0; inner < size; inner++) {
+      const offset = direction === "right" || direction === "down" ? size - 1 - inner : inner;
+      const index = direction === "left" || direction === "right" ? outer * size + offset : offset * size + outer;
+      line[inner] = index;
     }
+    lines.push(line);
   }
-  while (merged.length < row.length) merged.push(0);
-  return { row: merged, scoreDelta };
+
+  lineIndicesCache.set(cacheKey, lines);
+  return lines;
 }
 
 /**
  * 盤面を指定方向へ移動する (SPEC.md #10.1)。
- * 4方向すべてを個別実装せず、回転・反転によって「左への move」1種類に帰着させる。
+ * 4方向すべてを個別実装せず、`lineIndices()` が返す「詰まっていく先頭から順のインデックス列」を
+ * 使うことで、盤面の回転・転置による中間配列を作らずに直接結果盤面へ書き込む。
+ * 同ターン内で生成された結合後タイルは再結合しない (No Double Merge)。
  */
 export function move(board: Board, direction: Direction): MoveResult {
-  const rows = rowsFromBoard(board);
-
-  let workingRows: number[][];
-  const transposed = direction === "up" || direction === "down";
-  const reversed = direction === "right" || direction === "down";
-
-  workingRows = transposed ? transpose(rows) : rows;
-  if (reversed) {
-    workingRows = workingRows.map((row) => [...row].reverse());
-  }
-
+  const size = boardSizeOf(board);
+  const resultBoard = board.slice();
   let scoreDelta = 0;
-  const mergedRows = workingRows.map((row) => {
-    const result = mergeRowLeft(row);
-    scoreDelta += result.scoreDelta;
-    return result.row;
-  });
 
-  let resultRows = mergedRows;
-  if (reversed) {
-    resultRows = resultRows.map((row) => [...row].reverse());
-  }
-  if (transposed) {
-    resultRows = transpose(resultRows);
+  for (const line of lineIndices(direction, size)) {
+    let writePos = 0;
+    let canMergeWithPrevious = false;
+
+    for (const idx of line) {
+      const value = board[idx];
+      if (value === 0) continue;
+
+      if (canMergeWithPrevious && resultBoard[line[writePos - 1]] === value) {
+        const mergedValue = value * 2;
+        resultBoard[line[writePos - 1]] = mergedValue;
+        scoreDelta += mergedValue;
+        canMergeWithPrevious = false; // 結合済みタイルは同ターン中に再結合しない
+      } else {
+        resultBoard[line[writePos]] = value;
+        writePos += 1;
+        canMergeWithPrevious = true;
+      }
+    }
+
+    for (; writePos < line.length; writePos++) {
+      resultBoard[line[writePos]] = 0;
+    }
   }
 
-  const resultBoard = boardFromRows(resultRows);
   const moved = !boardsEqual(board, resultBoard);
-
   return { board: resultBoard, moved, scoreDelta };
 }
 
+const ALL_DIRECTIONS: Direction[] = ["up", "down", "left", "right"];
+
 /** 有効な（盤面が変化する）方向の一覧を返す (SPEC.md #10.1) */
 export function getValidMoves(board: Board): Direction[] {
-  const directions: Direction[] = ["up", "down", "left", "right"];
-  return directions.filter((direction) => move(board, direction).moved);
+  return ALL_DIRECTIONS.filter((direction) => move(board, direction).moved);
+}
+
+export interface ValidMove {
+  direction: Direction;
+  result: MoveResult;
+}
+
+/**
+ * 有効な手それぞれについて、direction と move() の結果を1回の計算でまとめて返す。
+ * `getValidMoves(board)` で有効な方向を求めてから改めて `move(board, direction)` を呼び直すと
+ * move() が二重に計算されるため、探索木の各ノードで手を展開する Expectimax のホットパス向けに用意した。
+ */
+export function getValidMovesWithResults(board: Board): ValidMove[] {
+  const validMoves: ValidMove[] = [];
+  for (const direction of ALL_DIRECTIONS) {
+    const result = move(board, direction);
+    if (result.moved) validMoves.push({ direction, result });
+  }
+  return validMoves;
 }
 
 /** 有効な手が1つも存在しない場合に true を返す (SPEC.md #10.1, #10.5) */

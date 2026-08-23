@@ -1,6 +1,6 @@
 import { boardSizeOf } from "../game/board";
 import { DEFAULT_START_TILE } from "../game/game";
-import { move } from "../game/move";
+import { lineIndices, move } from "../game/move";
 import type { Board, Direction, GameState } from "../game/types";
 
 const DEFAULT_MOVE_DURATION_MS = 140;
@@ -52,22 +52,6 @@ function tileClassName(value: number, startTile: number): string {
   const tier = Math.round(Math.log2(value / startTile));
   if (tier < 0 || tier >= TILE_TIER_CLASSES.length) return "tile tile-super";
   return `tile ${TILE_TIER_CLASSES[tier]}`;
-}
-
-function lineIndices(direction: Direction, size: number): number[][] {
-  const lines: number[][] = [];
-
-  for (let outer = 0; outer < size; outer++) {
-    const line: number[] = [];
-    for (let inner = 0; inner < size; inner++) {
-      const offset = direction === "right" || direction === "down" ? size - 1 - inner : inner;
-      const index = direction === "left" || direction === "right" ? outer * size + offset : offset * size + outer;
-      line.push(index);
-    }
-    lines.push(line);
-  }
-
-  return lines;
 }
 
 /**

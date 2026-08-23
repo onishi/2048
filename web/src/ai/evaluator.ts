@@ -2,24 +2,19 @@ import { boardSizeOf, getMaxTile } from "../game/board";
 import type { Board } from "../game/types";
 import { DEFAULT_WEIGHTS, type EvaluationWeights } from "./weights";
 
+const cornerIndicesCache = new Map<number, readonly number[]>();
+
 function cornerIndices(size: number): readonly number[] {
-  return [0, size - 1, size * (size - 1), size * size - 1];
+  let indices = cornerIndicesCache.get(size);
+  if (!indices) {
+    indices = [0, size - 1, size * (size - 1), size * size - 1];
+    cornerIndicesCache.set(size, indices);
+  }
+  return indices;
 }
 
 function log2OrZero(value: number): number {
   return value === 0 ? 0 : Math.log2(value);
-}
-
-function getRow(board: Board, size: number, r: number): number[] {
-  return board.slice(r * size, r * size + size);
-}
-
-function getColumn(board: Board, size: number, c: number): number[] {
-  const column: number[] = [];
-  for (let r = 0; r < size; r++) {
-    column.push(board[r * size + c]);
-  }
-  return column;
 }
 
 /** 空きマス数。多いほど高評価 (SPEC.md #12.2) */
@@ -43,15 +38,18 @@ export function cornerBonus(board: Board): number {
  * 1行/1列が厳密に単調（非減少 or 非増加）である場合にのみ、
  * その変化量（log2 差の合計）をクレジットとして返す。
  * 単調でない行/列は 0（ジグザグな並びに加点してしまうのを防ぐため）。
+ * 呼び出し元が盤面インデックスを直接渡すことで、行/列を配列として切り出すアロケーションを避ける。
  */
-function lineMonotonicityCredit(values: number[]): number {
+function lineMonotonicityCredit(board: Board, startIndex: number, step: number, length: number): number {
   let increasing = 0;
   let decreasing = 0;
-  for (let i = 0; i < values.length - 1; i++) {
-    const a = log2OrZero(values[i]);
-    const b = log2OrZero(values[i + 1]);
+  let a = log2OrZero(board[startIndex]);
+  for (let i = 0; i < length - 1; i++) {
+    const nextIndex = startIndex + (i + 1) * step;
+    const b = log2OrZero(board[nextIndex]);
     if (b >= a) increasing += b - a;
     else decreasing += a - b;
+    a = b;
   }
   if (decreasing === 0) return increasing;
   if (increasing === 0) return decreasing;
@@ -63,10 +61,10 @@ export function monotonicityScore(board: Board): number {
   const size = boardSizeOf(board);
   let score = 0;
   for (let r = 0; r < size; r++) {
-    score += lineMonotonicityCredit(getRow(board, size, r));
+    score += lineMonotonicityCredit(board, r * size, 1, size);
   }
   for (let c = 0; c < size; c++) {
-    score += lineMonotonicityCredit(getColumn(board, size, c));
+    score += lineMonotonicityCredit(board, c, size, size);
   }
   return score;
 }
