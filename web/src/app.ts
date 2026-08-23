@@ -123,6 +123,7 @@ const TEMPLATE = `
     <div class="action-bar">
       <button id="ai-move-button" type="button">AI Move</button>
       <button id="auto-play-button" type="button">Start AI</button>
+      <button id="undo-button" class="secondary" type="button" disabled>Undo</button>
       <button id="reset-button" class="secondary" type="button">Reset</button>
     </div>
     <p class="ai-suggestion" id="ai-suggestion"></p>
@@ -164,7 +165,10 @@ export class App {
   private readonly benchmarkResultsEl: HTMLElement;
   private readonly comparisonButtonEl: HTMLButtonElement;
   private readonly comparisonResultsEl: HTMLElement;
+  private readonly undoButtonEl: HTMLButtonElement;
 
+  /** Undo 用の手番履歴 (issue #28)。リロードをまたいでは保持しない (issue #24 とはスコープを分ける) */
+  private history: GameState[] = [];
   private boardSize: number = DEFAULT_BOARD_SIZE;
   private startTile: number = DEFAULT_START_TILE;
   private aiType: AiType = "greedy";
@@ -198,6 +202,7 @@ export class App {
     this.benchmarkResultsEl = this.query("#benchmark-results");
     this.comparisonButtonEl = this.query<HTMLButtonElement>("#comparison-button");
     this.comparisonResultsEl = this.query("#comparison-results");
+    this.undoButtonEl = this.query<HTMLButtonElement>("#undo-button");
 
     const initialTheme = loadStoredTheme();
     applyTheme(initialTheme);
@@ -233,6 +238,7 @@ export class App {
       this.reset();
     });
     this.query<HTMLButtonElement>("#reset-button").addEventListener("click", () => this.reset());
+    this.undoButtonEl.addEventListener("click", () => this.undo());
     this.query<HTMLButtonElement>("#ai-move-button").addEventListener("click", () => this.handleAiMove());
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
     this.aiSelectEl.addEventListener("change", () => {
@@ -335,6 +341,17 @@ export class App {
   private setGameplayControlsDisabled(disabled: boolean): void {
     this.autoPlayButtonEl.disabled = disabled;
     this.query<HTMLButtonElement>("#ai-move-button").disabled = disabled;
+    this.updateUndoButtonState();
+  }
+
+  /**
+   * Undo ボタンの有効/無効を、履歴の有無と他の実行中処理の状態から一元的に決める (issue #28)。
+   * 個別の箇所で `disabled` を直接書き換えると、Auto Play 中に applyDirection() が
+   * 呼ばれた際に上書きされてしまう等の不整合が起きるため、必ずこのメソッド経由にする。
+   */
+  private updateUndoButtonState(): void {
+    this.undoButtonEl.disabled =
+      this.history.length === 0 || this.autoPlayRunning || this.benchmarkRunning || this.comparisonRunning;
   }
 
   /** Web 版簡易ベンチマーク (SPEC.md #14.4, #42)。大量実行はローカルの Python 環境を推奨する */
@@ -463,6 +480,7 @@ export class App {
     this.autoPlayRunning = true;
     this.autoPlayButtonEl.textContent = "Pause";
     this.setBenchmarkControlsDisabled(true);
+    this.updateUndoButtonState();
     this.runAutoPlayStep();
   }
 
@@ -474,6 +492,7 @@ export class App {
       this.autoPlayTimer = null;
     }
     if (!this.benchmarkRunning && !this.comparisonRunning) this.setBenchmarkControlsDisabled(false);
+    this.updateUndoButtonState();
     // Pause / Reset / New Game: 進行中の探索結果を無視する (SPEC.md #13.2)
     this.aiWorkerClient?.cancel();
   }
@@ -521,7 +540,21 @@ export class App {
 
   private reset(): void {
     this.stopAutoPlay();
+    this.history = [];
+    this.updateUndoButtonState();
     this.setState(createInitialState(this.rng, this.boardSize, this.startTile));
+    this.aiSuggestionEl.textContent = "";
+    this.clearAiStats();
+    this.render();
+  }
+
+  /** 直前の手を1手取り消す (issue #28)。取り消し先はアニメーションなしで即座に表示する */
+  private undo(): void {
+    if (this.history.length === 0 || this.autoPlayRunning || this.benchmarkRunning || this.comparisonRunning) return;
+
+    const previous = this.history.pop() as GameState;
+    this.updateUndoButtonState();
+    this.setState(previous);
     this.aiSuggestionEl.textContent = "";
     this.clearAiStats();
     this.render();
@@ -532,6 +565,8 @@ export class App {
     const nextState = applyMove(previousState, direction, this.rng);
     if (nextState === previousState) return;
 
+    this.history.push(previousState);
+    this.updateUndoButtonState();
     this.setState(nextState);
     const animation: BoardAnimation | undefined =
       animationDurationMs === null
