@@ -11,6 +11,8 @@ export interface GameState {
   score: number;
   moveCount: number;
   gameOver: boolean;
+  /** タイル生成の基準値。既定は2 (SPEC.md #10.4)。3から始めるモードでは3 (issue #20) */
+  startTile: number;
 }
 
 export interface MoveResult {

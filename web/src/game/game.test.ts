@@ -19,6 +19,18 @@ describe("createInitialState", () => {
     expect(state.board).toHaveLength(size * size);
     expect(state.board.filter((v) => v !== 0)).toHaveLength(2);
   });
+
+  it("startTile を指定すると GameState.startTile に記録され、初期タイルもその値になる (issue #20)", () => {
+    const state = createInitialState(createRng(1), 4, 3);
+    expect(state.startTile).toBe(3);
+    const nonZero = state.board.filter((v) => v !== 0);
+    expect(nonZero.every((v) => v === 3 || v === 6)).toBe(true);
+  });
+
+  it("startTile を省略すると既定値2になる", () => {
+    const state = createInitialState(createRng(1));
+    expect(state.startTile).toBe(2);
+  });
 });
 
 describe("spawnRandomTile — SPEC.md #10.4", () => {
@@ -48,6 +60,26 @@ describe("spawnRandomTile — SPEC.md #10.4", () => {
     expect(result).toEqual(board);
   });
 
+  it("startTile を指定すると 3:90% / 6:10% で生成される (issue #20)", () => {
+    const rng = createRng(7);
+    let threeCount = 0;
+    let sixCount = 0;
+    const trials = 20000;
+
+    for (let i = 0; i < trials; i++) {
+      const board: Board = new Array(16).fill(3); // 1マスだけ空き
+      board[0] = 0;
+      const result = spawnRandomTile(board, rng, 3);
+      if (result[0] === 3) threeCount++;
+      else if (result[0] === 6) sixCount++;
+    }
+
+    const ratio = threeCount / trials;
+    expect(ratio).toBeGreaterThan(0.85);
+    expect(ratio).toBeLessThan(0.95);
+    expect(threeCount + sixCount).toBe(trials);
+  });
+
   it("空きマスから一様ランダムに選ばれる", () => {
     const rng = createRng(99);
     const counts = new Map<number, number>();
@@ -71,14 +103,14 @@ describe("spawnRandomTile — SPEC.md #10.4", () => {
 describe("applyMove", () => {
   it("盤面が変化しない方向を指定した場合は state をそのまま返す", () => {
     const board: Board = [2, 4, 8, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const state = { board, score: 0, moveCount: 0, gameOver: false };
+    const state = { board, score: 0, moveCount: 0, gameOver: false, startTile: 2 };
     const next = applyMove(state, "left", createRng(1));
     expect(next).toBe(state);
   });
 
   it("有効な手を適用すると moveCount と score が更新される", () => {
     const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const state = { board, score: 0, moveCount: 0, gameOver: false };
+    const state = { board, score: 0, moveCount: 0, gameOver: false, startTile: 2 };
     const next = applyMove(state, "left", createRng(1));
 
     expect(next.moveCount).toBe(1);
@@ -95,7 +127,7 @@ describe("applyMove", () => {
       2, 4, 2, 4,
       4, 2, 4, 2,
     ];
-    const state = { board, score: 100, moveCount: 5, gameOver: true };
+    const state = { board, score: 100, moveCount: 5, gameOver: true, startTile: 2 };
     const next = applyMove(state, "left", createRng(1));
     expect(next).toBe(state);
   });

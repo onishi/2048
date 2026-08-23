@@ -62,6 +62,20 @@ describe("runBenchmark — SPEC.md #14.4", () => {
     expect(Object.values(summary.tileDistribution).reduce((a, b) => a + b, 0)).toBe(3);
   });
 
+  it("startTile を指定すると 3 から始まるゲームを実行する (issue #20)", async () => {
+    const summary = await runBenchmark({
+      games: 3,
+      startTile: 3,
+      createPlayer: () => new RandomPlayer(createRng(1)),
+    });
+
+    expect(summary.games).toBe(3);
+    // 3から始まるモードではタイル値は 3 の倍(3,6,12,...)にしかならない
+    for (const tile of Object.keys(summary.tileDistribution).map(Number)) {
+      expect(tile % 3).toBe(0);
+    }
+  });
+
   it("maxMoves に達したら Game Over でなくてもゲームを打ち切る (issue #17)", async () => {
     // 大きい盤面では強い AI が Game Over に至らないまま手数が伸び続けることがあるため、
     // 安全弁として動作することを確認する。
