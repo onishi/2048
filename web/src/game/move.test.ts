@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyBoard } from "./board";
-import { getValidMoves, isGameOver, move } from "./move";
+import { getValidMoves, getValidMovesWithResults, isGameOver, move } from "./move";
 import type { Board } from "./types";
 
 /** 1行のパターンを4x4盤面の1行目に埋め込み、残りは0で埋める */
@@ -96,6 +96,37 @@ describe("isGameOver — SPEC.md #10.5", () => {
       4, 8, 16, 32,
     ];
     expect(isGameOver(board)).toBe(false);
+  });
+});
+
+describe("getValidMovesWithResults — Expectimax ホットパス向け最適化", () => {
+  it("getValidMoves と同じ有効方向の集合を返す", () => {
+    const board: Board = [
+      2, 0, 4, 8,
+      0, 2, 0, 0,
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+    ];
+    const withResults = getValidMovesWithResults(board);
+    expect(withResults.map((v) => v.direction).sort()).toEqual([...getValidMoves(board)].sort());
+  });
+
+  it("各要素の result が move(board, direction) の結果と一致する", () => {
+    const board: Board = [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const withResults = getValidMovesWithResults(board);
+    for (const { direction, result } of withResults) {
+      expect(result).toEqual(move(board, direction));
+    }
+  });
+
+  it("有効な手がない盤面では空配列を返す", () => {
+    const board: Board = [
+      2, 4, 2, 4,
+      4, 2, 4, 2,
+      2, 4, 2, 4,
+      4, 2, 4, 2,
+    ];
+    expect(getValidMovesWithResults(board)).toEqual([]);
   });
 });
 

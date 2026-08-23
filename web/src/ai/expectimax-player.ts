@@ -1,6 +1,6 @@
 import { getEmptyCells, serializeBoard } from "../game/board";
 import { DEFAULT_START_TILE } from "../game/game";
-import { getValidMoves, isGameOver, move } from "../game/move";
+import { getValidMovesWithResults } from "../game/move";
 import type { Board, Direction } from "../game/types";
 import { evaluate } from "./evaluator";
 import type { Player } from "./player";
@@ -89,16 +89,15 @@ export class ExpectimaxPlayer implements Player {
     this.cacheHits = 0;
     const startTime = performance.now();
 
-    const validMoves = getValidMoves(board);
+    const validMoves = getValidMovesWithResults(board);
     if (validMoves.length === 0) {
       throw new Error("No valid moves available");
     }
 
-    let bestDirection = validMoves[0];
+    let bestDirection = validMoves[0].direction;
     let bestScore = -Infinity;
     const actionValues: Partial<Record<Direction, number>> = {};
-    for (const direction of validMoves) {
-      const result = move(board, direction);
+    for (const { direction, result } of validMoves) {
       // MAX ノード本体（ルート）: depth は消費せず CHANCE へ渡す
       const score = this.expectimax(result.board, this.depth, "chance");
       actionValues[direction] = score;
@@ -133,13 +132,17 @@ export class ExpectimaxPlayer implements Player {
   }
 
   private maxNode(board: Board, depth: number): number {
-    if (depth === 0 || isGameOver(board)) {
+    if (depth === 0) {
+      return evaluate(board, this.weights);
+    }
+
+    const validMoves = getValidMovesWithResults(board);
+    if (validMoves.length === 0) {
       return evaluate(board, this.weights);
     }
 
     let best = -Infinity;
-    for (const direction of getValidMoves(board)) {
-      const result = move(board, direction);
+    for (const { result } of validMoves) {
       best = Math.max(best, this.expectimax(result.board, depth, "chance"));
     }
     return best;
