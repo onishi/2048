@@ -3,30 +3,41 @@ import { isGameOver, move } from "./move";
 import type { Rng } from "./rng";
 import type { Board, Direction, GameState } from "./types";
 
-/** 空きマスに新しいタイルを1つ生成する。2:90%, 4:10% (SPEC.md #10.4) */
-export function spawnRandomTile(board: Board, rng: Rng): Board {
+/** 開始タイル値は可変 (issue #20)。既定は従来通り 2 から始まる。 */
+export const DEFAULT_START_TILE = 2;
+
+/** 空きマスに新しいタイルを1つ生成する。startTile:90%, startTile*2:10% (SPEC.md #10.4, issue #20) */
+export function spawnRandomTile(board: Board, rng: Rng, startTile: number = DEFAULT_START_TILE): Board {
   const emptyCells = getEmptyCells(board);
   if (emptyCells.length === 0) return board;
 
   const cellIndex = emptyCells[Math.floor(rng.next() * emptyCells.length)];
-  const value = rng.next() < 0.9 ? 2 : 4;
+  const value = rng.next() < 0.9 ? startTile : startTile * 2;
 
   const next = board.slice();
   next[cellIndex] = value;
   return next;
 }
 
-/** 初期盤面（タイル2つ配置済み）を持つ GameState を生成する。盤面サイズは可変 (issue #16, #17) */
-export function createInitialState(rng: Rng, boardSize: number = DEFAULT_BOARD_SIZE): GameState {
+/**
+ * 初期盤面（タイル2つ配置済み）を持つ GameState を生成する。
+ * 盤面サイズ(issue #16, #17)・開始タイル値(issue #20)は可変。
+ */
+export function createInitialState(
+  rng: Rng,
+  boardSize: number = DEFAULT_BOARD_SIZE,
+  startTile: number = DEFAULT_START_TILE,
+): GameState {
   let board = createEmptyBoard(boardSize);
-  board = spawnRandomTile(board, rng);
-  board = spawnRandomTile(board, rng);
+  board = spawnRandomTile(board, rng, startTile);
+  board = spawnRandomTile(board, rng, startTile);
 
   return {
     board,
     score: 0,
     moveCount: 0,
     gameOver: false,
+    startTile,
   };
 }
 
@@ -39,13 +50,14 @@ export function applyMove(state: GameState, direction: Direction, rng: Rng): Gam
   const result = move(state.board, direction);
   if (!result.moved) return state;
 
-  const boardWithNewTile = spawnRandomTile(result.board, rng);
+  const boardWithNewTile = spawnRandomTile(result.board, rng, state.startTile);
 
   return {
     board: boardWithNewTile,
     score: state.score + result.scoreDelta,
     moveCount: state.moveCount + 1,
     gameOver: isGameOver(boardWithNewTile),
+    startTile: state.startTile,
   };
 }
 

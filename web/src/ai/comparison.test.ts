@@ -44,6 +44,17 @@ describe("runComparison — SPEC.md #54, Phase 10", () => {
     expect(entries[0].summary.games).toBe(3);
   });
 
+  it("startTile を指定すると 3 から始まる盤面で実行される (issue #20)", async () => {
+    const entries = await runComparison({
+      aiTypes: ["random"],
+      games: 3,
+      startTile: 3,
+      createPlayer: () => new RandomPlayer(createRng(1)),
+    });
+
+    expect(entries[0].summary.games).toBe(3);
+  });
+
   it("onProgress が各AI・各ゲームで呼ばれる", async () => {
     const calls: Array<[string, number, number]> = [];
     await runComparison({

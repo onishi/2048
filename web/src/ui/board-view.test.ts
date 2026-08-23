@@ -112,6 +112,30 @@ describe("renderBoard", () => {
     expect(container.querySelector(".tile-4")?.getAttribute("style")).toContain(`grid-column-start: ${size}`);
   });
 
+  it("startTile を指定すると、その値からの倍化段数(tier)で配色クラスが決まる (issue #20)", () => {
+    const container = document.createElement("div");
+    // 3 から始めるモード: 3, 6, 12, 24 は 2 から始めた場合の 2, 4, 8, 16 と同じ配色階層になる
+    const board: Board = [3, 6, 12, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    renderBoard(container, board, undefined, 3);
+
+    expect(container.querySelector('.tile[style*="grid-column-start: 1"]')?.className).toContain("tile-2");
+    expect(container.querySelector('.tile[style*="grid-column-start: 2"]')?.className).toContain("tile-4");
+    expect(container.querySelector('.tile[style*="grid-column-start: 3"]')?.className).toContain("tile-8");
+    expect(container.querySelector('.tile[style*="grid-column-start: 4"]')?.className).toContain("tile-16");
+  });
+
+  it("startTile を省略すると従来通り値そのものが配色クラスになる", () => {
+    const container = document.createElement("div");
+    const board: Board = [2, 4, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    renderBoard(container, board);
+
+    expect(container.querySelectorAll(".tile-2")).toHaveLength(1);
+    expect(container.querySelectorAll(".tile-4")).toHaveLength(1);
+    expect(container.querySelectorAll(".tile-8")).toHaveLength(1);
+  });
+
   it("移動タイルの完了後に結合タイルと新規タイルを表示する", async () => {
     const animate = vi.fn(() => ({
       cancel: vi.fn(),

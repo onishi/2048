@@ -9,7 +9,7 @@ import { RandomPlayer } from "./ai/random-player";
 import { WorkerExpectimaxPlayer } from "./ai/worker-expectimax-player";
 import { DEFAULT_WEIGHTS } from "./ai/weights";
 import { DEFAULT_BOARD_SIZE, MAX_BOARD_SIZE, MIN_BOARD_SIZE } from "./game/board";
-import { applyMove, createInitialState } from "./game/game";
+import { applyMove, createInitialState, DEFAULT_START_TILE } from "./game/game";
 import { move } from "./game/move";
 import { createRandomRng } from "./game/rng";
 import type { Board, Direction, GameState } from "./game/types";
@@ -33,6 +33,12 @@ const BOARD_SIZE_OPTIONS: number[] = Array.from(
   { length: MAX_BOARD_SIZE - MIN_BOARD_SIZE + 1 },
   (_, i) => MIN_BOARD_SIZE + i,
 );
+
+/** 開始タイル値の選択肢 (issue #20) */
+const START_TILE_OPTIONS = [
+  { value: DEFAULT_START_TILE, label: "2 (Classic)" },
+  { value: 3, label: "3" },
+];
 
 /** SPEC.md #14.3: Auto Play 速度。値は手と手の間隔(ms) */
 const AUTO_PLAY_INTERVALS_MS: Record<AutoPlaySpeed, number> = {
@@ -73,6 +79,15 @@ const TEMPLATE = `
           ${BOARD_SIZE_OPTIONS.map(
             (size) =>
               `<option value="${size}"${size === DEFAULT_BOARD_SIZE ? " selected" : ""}>${size}×${size}</option>`,
+          ).join("")}
+        </select>
+      </label>
+      <label class="ai-select-label">
+        Start:
+        <select id="start-tile-select">
+          ${START_TILE_OPTIONS.map(
+            ({ value, label }) =>
+              `<option value="${value}"${value === DEFAULT_START_TILE ? " selected" : ""}>${label}</option>`,
           ).join("")}
         </select>
       </label>
@@ -136,6 +151,7 @@ export class App {
   private readonly messageEl: HTMLElement;
   private readonly themeSelectEl: HTMLSelectElement;
   private readonly boardSizeSelectEl: HTMLSelectElement;
+  private readonly startTileSelectEl: HTMLSelectElement;
   private readonly aiSelectEl: HTMLSelectElement;
   private readonly depthSelectEl: HTMLSelectElement;
   private readonly speedSelectEl: HTMLSelectElement;
@@ -149,6 +165,7 @@ export class App {
   private readonly comparisonResultsEl: HTMLElement;
 
   private boardSize: number = DEFAULT_BOARD_SIZE;
+  private startTile: number = DEFAULT_START_TILE;
   private aiType: AiType = "greedy";
   private depth: DepthSetting = DEFAULT_DEPTH;
   private autoPlaySpeed: AutoPlaySpeed = "normal";
@@ -168,6 +185,7 @@ export class App {
     this.messageEl = this.query("#message");
     this.themeSelectEl = this.query<HTMLSelectElement>("#theme-select");
     this.boardSizeSelectEl = this.query<HTMLSelectElement>("#board-size-select");
+    this.startTileSelectEl = this.query<HTMLSelectElement>("#start-tile-select");
     this.aiSelectEl = this.query<HTMLSelectElement>("#ai-select");
     this.depthSelectEl = this.query<HTMLSelectElement>("#depth-select");
     this.speedSelectEl = this.query<HTMLSelectElement>("#speed-select");
@@ -184,7 +202,7 @@ export class App {
     applyTheme(initialTheme);
     this.themeSelectEl.value = initialTheme;
 
-    this.state = createInitialState(this.rng, this.boardSize);
+    this.state = createInitialState(this.rng, this.boardSize, this.startTile);
     this.render();
 
     attachControls(this.boardEl, (direction) => this.handleMove(direction));
@@ -193,6 +211,11 @@ export class App {
     });
     this.boardSizeSelectEl.addEventListener("change", () => {
       this.boardSize = Number(this.boardSizeSelectEl.value);
+      this.updateNeuralAvailability();
+      this.reset();
+    });
+    this.startTileSelectEl.addEventListener("change", () => {
+      this.startTile = Number(this.startTileSelectEl.value);
       this.updateNeuralAvailability();
       this.reset();
     });
@@ -246,14 +269,18 @@ export class App {
   }
 
   /**
-   * Neural AI は 4x4 専用に学習されたモデルしか持たないため (SPEC.md #17.3)、
-   * 盤面サイズが 4 以外のときは選択肢を無効化し、選択中なら Greedy に切り替える (issue #16, #17)。
+   * Neural AI は「4x4・2から始まる」盤面専用に学習されたモデルしか持たないため (SPEC.md #17.3)、
+   * それ以外の設定では選択肢を無効化し、選択中なら Greedy に切り替える (issue #16, #17, #20)。
    */
+  private isNeuralCompatible(): boolean {
+    return this.boardSize === DEFAULT_BOARD_SIZE && this.startTile === DEFAULT_START_TILE;
+  }
+
   private updateNeuralAvailability(): void {
     const neuralOption = this.aiSelectEl.querySelector<HTMLOptionElement>('option[value="neural"]');
     if (!neuralOption) return;
 
-    const neuralAvailable = this.boardSize === DEFAULT_BOARD_SIZE;
+    const neuralAvailable = this.isNeuralCompatible();
     neuralOption.disabled = !neuralAvailable;
     if (!neuralAvailable && this.aiType === "neural") {
       this.aiType = "greedy";
@@ -261,9 +288,9 @@ export class App {
     }
   }
 
-  /** Compare All AIs で使う AI 一覧。Neural は盤面サイズが4のときのみ含める */
+  /** Compare All AIs で使う AI 一覧。Neural は盤面サイズ4・開始タイル2のときのみ含める */
   private availableAiTypes(): AiType[] {
-    return this.boardSize === DEFAULT_BOARD_SIZE ? AI_TYPES : AI_TYPES.filter((aiType) => aiType !== "neural");
+    return this.isNeuralCompatible() ? AI_TYPES : AI_TYPES.filter((aiType) => aiType !== "neural");
   }
 
   /**
@@ -314,6 +341,7 @@ export class App {
       const summary = await runBenchmark({
         games,
         boardSize: this.boardSize,
+        startTile: this.startTile,
         createPlayer: () => this.createPlayerForAiType(this.aiType, benchmarkWorkerClient),
         onProgress: (completed, total) => {
           this.benchmarkResultsEl.textContent = `Running ${completed}/${total}...`;
@@ -347,6 +375,7 @@ export class App {
         aiTypes: this.availableAiTypes(),
         games,
         boardSize: this.boardSize,
+        startTile: this.startTile,
         createPlayer: (aiType) => this.createPlayerForAiType(aiType, comparisonWorkerClient),
         onProgress: (aiType, completed, total) => {
           this.comparisonResultsEl.textContent = `Running ${aiType}: ${completed}/${total}...`;
@@ -473,7 +502,7 @@ export class App {
 
   private reset(): void {
     this.stopAutoPlay();
-    this.state = createInitialState(this.rng, this.boardSize);
+    this.state = createInitialState(this.rng, this.boardSize, this.startTile);
     this.aiSuggestionEl.textContent = "";
     this.clearAiStats();
     this.render();
@@ -497,7 +526,7 @@ export class App {
   }
 
   private render(animation?: BoardAnimation): void {
-    renderBoard(this.boardEl, this.state.board, animation);
+    renderBoard(this.boardEl, this.state.board, animation, this.state.startTile);
     renderScore(this.scoreEl, this.maxTileEl, this.state);
     renderMessage(this.messageEl, this.state.gameOver);
   }

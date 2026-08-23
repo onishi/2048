@@ -1,9 +1,28 @@
 import { boardSizeOf } from "../game/board";
+import { DEFAULT_START_TILE } from "../game/game";
 import { move } from "../game/move";
 import type { Board, Direction, GameState } from "../game/types";
 
-const MAX_STYLED_TILE = 2048;
 const DEFAULT_MOVE_DURATION_MS = 140;
+
+/**
+ * タイルの配色は「開始タイル値から何回倍化したか(tier)」で決める (issue #20)。
+ * 3から始めるモードでは 3, 6, 12, ... のように値そのものは2048モードと異なるが、
+ * 同じ12段階の配色を使い回すことで見た目の一貫性を保つ。
+ */
+const TILE_TIER_CLASSES = [
+  "tile-2",
+  "tile-4",
+  "tile-8",
+  "tile-16",
+  "tile-32",
+  "tile-64",
+  "tile-128",
+  "tile-256",
+  "tile-512",
+  "tile-1024",
+  "tile-2048",
+];
 
 export interface BoardAnimation {
   previousBoard: Board;
@@ -29,9 +48,10 @@ interface ActiveBoardAnimation {
 
 const activeAnimations = new WeakMap<HTMLElement, ActiveBoardAnimation>();
 
-function tileClassName(value: number): string {
-  if (value > MAX_STYLED_TILE) return "tile tile-super";
-  return `tile tile-${value}`;
+function tileClassName(value: number, startTile: number): string {
+  const tier = Math.round(Math.log2(value / startTile));
+  if (tier < 0 || tier >= TILE_TIER_CLASSES.length) return "tile tile-super";
+  return `tile ${TILE_TIER_CLASSES[tier]}`;
 }
 
 function lineIndices(direction: Direction, size: number): number[][] {
@@ -89,9 +109,9 @@ function placeOnBoard(element: HTMLElement, index: number, size: number): void {
   element.style.gridColumnStart = String((index % size) + 1);
 }
 
-function createTile(value: number, index: number, size: number): HTMLDivElement {
+function createTile(value: number, index: number, size: number, startTile: number): HTMLDivElement {
   const tile = document.createElement("div");
-  tile.className = tileClassName(value);
+  tile.className = tileClassName(value, startTile);
   tile.textContent = String(value);
   placeOnBoard(tile, index, size);
   return tile;
@@ -108,7 +128,12 @@ function cancelActiveAnimation(container: HTMLElement): void {
   active.cancel();
 }
 
-export function renderBoard(container: HTMLElement, board: Board, transition?: BoardAnimation): void {
+export function renderBoard(
+  container: HTMLElement,
+  board: Board,
+  transition?: BoardAnimation,
+  startTile: number = DEFAULT_START_TILE,
+): void {
   cancelActiveAnimation(container);
   container.innerHTML = "";
 
@@ -128,7 +153,7 @@ export function renderBoard(container: HTMLElement, board: Board, transition?: B
   const finalTiles = new Map<number, HTMLDivElement>();
   for (const [index, value] of board.entries()) {
     if (value === 0) continue;
-    const tile = createTile(value, index, size);
+    const tile = createTile(value, index, size, startTile);
     finalTiles.set(index, tile);
     container.appendChild(tile);
   }
@@ -157,7 +182,7 @@ export function renderBoard(container: HTMLElement, board: Board, transition?: B
   for (const tile of finalTiles.values()) tile.classList.add("tile-hidden");
 
   const movingTiles = plan.motions.map((motion) => {
-    const tile = createTile(motion.value, motion.fromIndex, size);
+    const tile = createTile(motion.value, motion.fromIndex, size, startTile);
     tile.classList.add("tile-moving");
     tile.setAttribute("aria-hidden", "true");
     container.appendChild(tile);

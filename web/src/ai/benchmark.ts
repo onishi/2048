@@ -1,5 +1,5 @@
 import { DEFAULT_BOARD_SIZE } from "../game/board";
-import { applyMove, createInitialState, getMaxTile } from "../game/game";
+import { applyMove, createInitialState, DEFAULT_START_TILE, getMaxTile } from "../game/game";
 import { createRng } from "../game/rng";
 import type { Player } from "./player";
 
@@ -30,6 +30,8 @@ export interface RunBenchmarkOptions {
   yieldEvery?: number;
   /** 盤面サイズ。既定は 4x4 (issue #16, #17) */
   boardSize?: number;
+  /** 開始タイル値。既定は 2 (issue #20) */
+  startTile?: number;
   /**
    * 1ゲームあたりの最大手数。盤面が大きいほど空きマスに余裕が生まれ、
    * 強い AI(Greedy/Expectimax)は Game Over に至らないまま手数が際限なく伸び続けることがある
@@ -59,6 +61,7 @@ export async function runBenchmark(options: RunBenchmarkOptions): Promise<Benchm
     onProgress,
     yieldEvery = 1,
     boardSize = DEFAULT_BOARD_SIZE,
+    startTile = DEFAULT_START_TILE,
     maxMoves = DEFAULT_MAX_MOVES,
   } = options;
   const results: BenchmarkGameResult[] = [];
@@ -67,7 +70,7 @@ export async function runBenchmark(options: RunBenchmarkOptions): Promise<Benchm
   for (let i = 0; i < games; i++) {
     const rng = createRng(seedBase + i);
     const player = createPlayer();
-    let state = createInitialState(rng, boardSize);
+    let state = createInitialState(rng, boardSize, startTile);
 
     while (!state.gameOver && state.moveCount < maxMoves) {
       const direction = await player.chooseMove(state.board);

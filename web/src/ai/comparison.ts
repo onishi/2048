@@ -17,6 +17,8 @@ export interface RunComparisonOptions {
   onProgress?: (aiType: AiType, completed: number, total: number) => void;
   /** 盤面サイズ。既定は 4x4 (issue #16, #17) */
   boardSize?: number;
+  /** 開始タイル値。既定は 2 (issue #20) */
+  startTile?: number;
   /** 1ゲームあたりの最大手数。詳細は RunBenchmarkOptions.maxMoves を参照 */
   maxMoves?: number;
 }
@@ -25,13 +27,14 @@ export interface RunComparisonOptions {
  * 複数の AI を同条件(ゲーム数)で自動対局させ、比較結果を返す (SPEC.md #54, Phase 10)。
  */
 export async function runComparison(options: RunComparisonOptions): Promise<ComparisonEntry[]> {
-  const { aiTypes, games, createPlayer, onProgress, boardSize, maxMoves } = options;
+  const { aiTypes, games, createPlayer, onProgress, boardSize, startTile, maxMoves } = options;
   const entries: ComparisonEntry[] = [];
 
   for (const aiType of aiTypes) {
     const summary = await runBenchmark({
       games,
       boardSize,
+      startTile,
       maxMoves,
       createPlayer: () => createPlayer(aiType),
       onProgress: (completed, total) => onProgress?.(aiType, completed, total),
