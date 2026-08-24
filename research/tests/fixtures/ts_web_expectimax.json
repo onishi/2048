@@ -1,1 +1,29 @@
-[{"direction":"down","evaluation":8684.307083333333,"actionValues":{"down":8684.307083333333,"left":8670.344249999998,"right":8619.877092592591}},{"direction":"down","evaluation":14065.686407407407,"actionValues":{"down":14065.686407407407,"right":13496.240537037038}},{"direction":"up","evaluation":37630.684481481476,"actionValues":{"up":37630.684481481476,"down":31567.632787037033,"left":36750.578861111106,"right":30802.878018518513}}]
+[
+  {
+    "direction": "left",
+    "evaluation": 11490.331790740742,
+    "actionValues": {
+      "down": 11487.723991666664,
+      "left": 11490.331790740742,
+      "right": 11385.439644444443
+    }
+  },
+  {
+    "direction": "down",
+    "evaluation": 19106.952039814812,
+    "actionValues": {
+      "down": 19106.952039814812,
+      "right": 18086.463915740736
+    }
+  },
+  {
+    "direction": "up",
+    "evaluation": 52743.36185000001,
+    "actionValues": {
+      "up": 52743.36185000001,
+      "down": 44422.61430000001,
+      "left": 52244.53052962962,
+      "right": 43768.08729166666
+    }
+  }
+]
