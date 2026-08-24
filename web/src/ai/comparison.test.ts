@@ -69,4 +69,19 @@ describe("runComparison — SPEC.md #54, Phase 10", () => {
       ["random", 2, 2],
     ]);
   });
+
+  it("onMoveProgress が aiType 付きでゲーム内の進捗を報告する (issue #34)", async () => {
+    const calls: Array<[string, number, number]> = [];
+    await runComparison({
+      aiTypes: ["random"],
+      games: 2,
+      createPlayer: () => new RandomPlayer(createRng(1)),
+      onMoveProgress: (aiType, gameIndex, moveCount) => calls.push([aiType, gameIndex, moveCount]),
+    });
+
+    expect(calls.length).toBeGreaterThan(0);
+    for (const [aiType] of calls) {
+      expect(aiType).toBe("random");
+    }
+  });
 });

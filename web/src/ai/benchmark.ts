@@ -26,8 +26,16 @@ export interface RunBenchmarkOptions {
   /** ゲームごとの乱数 seed の起点。games 回、seedBase, seedBase+1, ... と変える */
   seedBase?: number;
   onProgress?: (completed: number, total: number) => void;
+  /**
+   * 実行中の1ゲーム内での進捗(手数)を報告する (issue #34)。
+   * Expectimax は1ゲームが数分かかることもあり、onProgress だけではゲームが
+   * 完了するまで画面が何十手も無反応に見えてしまうため、ゲーム内の途中経過を伝える。
+   */
+  onMoveProgress?: (gameIndex: number, moveCount: number) => void;
   /** 何ゲームごとにイベントループへ制御を返すか(UI の応答性確保のため) */
   yieldEvery?: number;
+  /** 何手ごとに onMoveProgress を呼ぶか */
+  moveProgressEvery?: number;
   /** 盤面サイズ。既定は 4x4 (issue #16, #17) */
   boardSize?: number;
   /** 開始タイル値。既定は 2 (issue #20) */
@@ -59,7 +67,9 @@ export async function runBenchmark(options: RunBenchmarkOptions): Promise<Benchm
     createPlayer,
     seedBase = 1,
     onProgress,
+    onMoveProgress,
     yieldEvery = 1,
+    moveProgressEvery = 20,
     boardSize = DEFAULT_BOARD_SIZE,
     startTile = DEFAULT_START_TILE,
     maxMoves = DEFAULT_MAX_MOVES,
@@ -75,6 +85,9 @@ export async function runBenchmark(options: RunBenchmarkOptions): Promise<Benchm
     while (!state.gameOver && state.moveCount < maxMoves) {
       const direction = await player.chooseMove(state.board);
       state = applyMove(state, direction, rng);
+      if (state.moveCount % moveProgressEvery === 0) {
+        onMoveProgress?.(i, state.moveCount);
+      }
     }
 
     results.push({ score: state.score, maxTile: getMaxTile(state.board), moveCount: state.moveCount });

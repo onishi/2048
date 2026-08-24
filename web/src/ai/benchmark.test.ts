@@ -76,6 +76,24 @@ describe("runBenchmark — SPEC.md #14.4", () => {
     }
   });
 
+  it("onMoveProgress が moveProgressEvery 手ごとにゲーム内の進捗を報告する (issue #34)", async () => {
+    const calls: Array<[number, number]> = [];
+    await runBenchmark({
+      games: 2,
+      moveProgressEvery: 5,
+      createPlayer: () => new RandomPlayer(createRng(1)),
+      onMoveProgress: (gameIndex, moveCount) => calls.push([gameIndex, moveCount]),
+    });
+
+    expect(calls.length).toBeGreaterThan(0);
+    // gameIndex は 0 始まり、moveCount は moveProgressEvery の倍数ごとに報告される
+    for (const [gameIndex, moveCount] of calls) {
+      expect(gameIndex).toBeGreaterThanOrEqual(0);
+      expect(gameIndex).toBeLessThan(2);
+      expect(moveCount % 5).toBe(0);
+    }
+  });
+
   it("maxMoves に達したら Game Over でなくてもゲームを打ち切る (issue #17)", async () => {
     // 大きい盤面では強い AI が Game Over に至らないまま手数が伸び続けることがあるため、
     // 安全弁として動作することを確認する。

@@ -14,7 +14,6 @@ import { move } from "./game/move";
 import { loadGameState, saveGameState } from "./game/persistence";
 import { createRandomRng } from "./game/rng";
 import type { Board, Direction, GameState } from "./game/types";
-import { NeuralPlayer } from "./model/neural-player";
 import { renderBoard, renderMessage, renderScore, type BoardAnimation } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
 import { renderAiStats, renderBenchmarkResults, renderComparisonResults, type AiStatsData } from "./ui/stats";
@@ -150,6 +149,24 @@ const TEMPLATE = `
   </div>
 `;
 
+/**
+ * onnxruntime-web は Neural AI を実際に使うときだけ必要な重い依存関係のため、
+ * 起動時の初期バンドルには含めず動的 import で遅延読み込みする (issue #34)。
+ * Player インターフェース自体は同期的に構築できる必要があるため、
+ * 実体(NeuralPlayer)の読み込みは初回 chooseMove 呼び出し時まで遅延させるラッパーとして実装する。
+ */
+class LazyNeuralPlayer implements Player {
+  private playerPromise: Promise<Player> | null = null;
+
+  async chooseMove(board: Board): Promise<Direction> {
+    if (!this.playerPromise) {
+      this.playerPromise = import("./model/neural-player").then((module) => new module.NeuralPlayer());
+    }
+    const player = await this.playerPromise;
+    return player.chooseMove(board);
+  }
+}
+
 export class App {
   private state: GameState;
   private readonly rng = createRandomRng();
@@ -283,7 +300,7 @@ export class App {
       case "expectimax":
         return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth, this.startTile);
       case "neural":
-        return new NeuralPlayer();
+        return new LazyNeuralPlayer();
       case "greedy":
         return new GreedyPlayer();
     }
@@ -331,7 +348,7 @@ export class App {
         if (!workerClient) throw new Error("workerClient is required for Expectimax");
         return new WorkerExpectimaxPlayer(workerClient, this.depth, this.startTile);
       case "neural":
-        return new NeuralPlayer();
+        return new LazyNeuralPlayer();
       case "greedy":
         return new GreedyPlayer();
     }
@@ -382,6 +399,9 @@ export class App {
         onProgress: (completed, total) => {
           this.benchmarkResultsEl.textContent = `Running ${completed}/${total}...`;
         },
+        onMoveProgress: (gameIndex, moveCount) => {
+          this.benchmarkResultsEl.textContent = `Running ${gameIndex + 1}/${games}... (move ${moveCount})`;
+        },
       });
       renderBenchmarkResults(this.benchmarkResultsEl, summary);
     } catch (error) {
@@ -415,6 +435,9 @@ export class App {
         createPlayer: (aiType) => this.createPlayerForAiType(aiType, comparisonWorkerClient),
         onProgress: (aiType, completed, total) => {
           this.comparisonResultsEl.textContent = `Running ${aiType}: ${completed}/${total}...`;
+        },
+        onMoveProgress: (aiType, gameIndex, moveCount) => {
+          this.comparisonResultsEl.textContent = `Running ${aiType}: ${gameIndex + 1}/${games}... (move ${moveCount})`;
         },
       });
       renderComparisonResults(this.comparisonResultsEl, entries);
