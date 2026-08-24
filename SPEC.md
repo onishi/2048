@@ -632,16 +632,16 @@ export interface EvaluationWeights {
 }
 
 const DEFAULT_WEIGHTS: EvaluationWeights = {
-  empty: 270,
-  monotonicity: 50,
-  smoothness: 10,
-  merge: 700,
-  corner: 1000,
-  snake: 1,
+  empty: 327,
+  monotonicity: 70,
+  smoothness: 15,
+  merge: 569,
+  corner: 1459,
+  snake: 1.2,
 };
 ```
 
-この値は最終値ではなく初期値であり、Python 研究環境（14 章）のベンチマークによって調整する。
+この値は Python 研究環境（14 章）のパラメータ探索スクリプトと Expectimax による検証を経て調整済みの値である（issue #32）。
 
 ---
 

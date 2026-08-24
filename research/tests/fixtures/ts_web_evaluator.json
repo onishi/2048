@@ -93,49 +93,49 @@
   ],
   "expected": [
     {
-      "empty": 1350,
-      "monotonicity": 2350,
-      "smoothness": -330,
+      "empty": 1635,
+      "monotonicity": 3290,
+      "smoothness": -495,
       "merge": 0,
-      "corner": 2048000,
-      "snake": 57338,
-      "total": 2108708
+      "corner": 2988032,
+      "snake": 68805.59999999999,
+      "total": 3061267.6
     },
     {
-      "empty": 2700,
-      "monotonicity": 600,
-      "smoothness": -60,
+      "empty": 3270,
+      "monotonicity": 840,
+      "smoothness": -90,
       "merge": 0,
-      "corner": 8000,
-      "snake": 266,
-      "total": 11506
+      "corner": 11672,
+      "snake": 319.2,
+      "total": 16011.2
     },
     {
-      "empty": 3240,
-      "monotonicity": 400,
-      "smoothness": -60,
+      "empty": 3924,
+      "monotonicity": 560,
+      "smoothness": -90,
       "merge": 0,
-      "corner": 8000,
-      "snake": 264,
-      "total": 11844
+      "corner": 11672,
+      "snake": 316.8,
+      "total": 16382.8
     },
     {
       "empty": 0,
-      "monotonicity": 500,
-      "smoothness": -620,
-      "merge": 1400,
+      "monotonicity": 700,
+      "smoothness": -930,
+      "merge": 1138,
       "corner": 0,
-      "snake": 21092,
-      "total": 22372
+      "snake": 25310.399999999998,
+      "total": 26218.399999999998
     },
     {
-      "empty": 4320,
+      "empty": 5232,
       "monotonicity": 0,
       "smoothness": 0,
       "merge": 0,
       "corner": 0,
       "snake": 0,
-      "total": 4320
+      "total": 5232
     }
   ]
 }
