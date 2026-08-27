@@ -3,6 +3,8 @@ export type Theme = "classic" | "scifi" | "nature";
 
 export const THEMES: Theme[] = ["classic", "scifi", "nature"];
 
+export const DEFAULT_THEME: Theme = "classic";
+
 export const THEME_LABELS: Record<Theme, string> = {
   classic: "Classic",
   scifi: "Sci-Fi",
@@ -23,7 +25,7 @@ export function loadStoredTheme(): Theme {
   } catch {
     // プライベートブラウジング等で localStorage が使えない場合は無視する
   }
-  return "classic";
+  return DEFAULT_THEME;
 }
 
 /** テーマを `<html data-theme="...">` に反映し、選択を保存する */
