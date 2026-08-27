@@ -632,16 +632,16 @@ export interface EvaluationWeights {
 }
 
 const DEFAULT_WEIGHTS: EvaluationWeights = {
-  empty: 327,
-  monotonicity: 70,
-  smoothness: 15,
-  merge: 569,
-  corner: 1459,
-  snake: 1.2,
+  empty: 341,
+  monotonicity: 55,
+  smoothness: 21,
+  merge: 462,
+  corner: 2056,
+  snake: 1.63,
 };
 ```
 
-この値は Python 研究環境（14 章）のパラメータ探索スクリプトと Expectimax による検証を経て調整済みの値である（issue #32）。
+この値は Python 研究環境（14 章）のパラメータ探索スクリプトと Expectimax による検証を経て調整済みの値である。issue #32 で一度調整し、その後 issue #32 の値を基準に Random Search と本番 Expectimax (depth=3) による再検証を行い、平均スコア約+9%・4096到達率 40%→55% の改善を確認して更新した。
 
 ---
 
