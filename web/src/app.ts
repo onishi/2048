@@ -36,6 +36,7 @@ const BOARD_SIZE_OPTIONS: number[] = Array.from(
 
 /** 開始タイル値の選択肢 (issue #20) */
 const START_TILE_OPTIONS = [
+  { value: 1, label: "1" },
   { value: DEFAULT_START_TILE, label: "2 (Classic)" },
   { value: 3, label: "3" },
 ];
