@@ -17,7 +17,7 @@ import type { Board, Direction, GameState } from "./game/types";
 import { renderBoard, renderMessage, renderScore, type BoardAnimation } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
 import { renderAiStats, renderBenchmarkResults, renderComparisonResults, type AiStatsData } from "./ui/stats";
-import { applyTheme, loadStoredTheme, THEMES, THEME_LABELS, type Theme } from "./ui/theme";
+import { applyTheme, DEFAULT_THEME, loadStoredTheme, THEMES, THEME_LABELS, type Theme } from "./ui/theme";
 import { AiWorkerClient } from "./worker/ai-worker-client";
 
 const MAX_BENCHMARK_GAMES = 200;
@@ -132,6 +132,7 @@ const TEMPLATE = `
             ${THEMES.map((theme) => `<option value="${theme}">${THEME_LABELS[theme]}</option>`).join("")}
           </select>
         </label>
+        <button id="reset-defaults-button" class="secondary" type="button">Reset to Default</button>
       </div>
     </details>
     <details class="advanced">
@@ -190,6 +191,7 @@ export class App {
   private readonly comparisonButtonEl: HTMLButtonElement;
   private readonly comparisonResultsEl: HTMLElement;
   private readonly undoButtonEl: HTMLButtonElement;
+  private readonly resetDefaultsButtonEl: HTMLButtonElement;
 
   /** Undo 用の手番履歴 (issue #28)。リロードをまたいでは保持しない (issue #24 とはスコープを分ける) */
   private history: GameState[] = [];
@@ -227,6 +229,7 @@ export class App {
     this.comparisonButtonEl = this.query<HTMLButtonElement>("#comparison-button");
     this.comparisonResultsEl = this.query("#comparison-results");
     this.undoButtonEl = this.query<HTMLButtonElement>("#undo-button");
+    this.resetDefaultsButtonEl = this.query<HTMLButtonElement>("#reset-defaults-button");
 
     const initialTheme = loadStoredTheme();
     applyTheme(initialTheme);
@@ -262,6 +265,7 @@ export class App {
       this.reset();
     });
     this.query<HTMLButtonElement>("#reset-button").addEventListener("click", () => this.reset());
+    this.resetDefaultsButtonEl.addEventListener("click", () => this.resetToDefaults());
     this.undoButtonEl.addEventListener("click", () => this.undo());
     this.query<HTMLButtonElement>("#ai-move-button").addEventListener("click", () => this.handleAiMove());
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
@@ -576,6 +580,18 @@ export class App {
     this.aiSuggestionEl.textContent = "";
     this.clearAiStats();
     this.render();
+  }
+
+  /** 盤面サイズ・開始タイル・テーマを既定値(4x4, 2から始まる, Classic)に戻す */
+  private resetToDefaults(): void {
+    this.boardSize = DEFAULT_BOARD_SIZE;
+    this.startTile = DEFAULT_START_TILE;
+    this.boardSizeSelectEl.value = String(DEFAULT_BOARD_SIZE);
+    this.startTileSelectEl.value = String(DEFAULT_START_TILE);
+    this.themeSelectEl.value = DEFAULT_THEME;
+    applyTheme(DEFAULT_THEME);
+    this.updateNeuralAvailability();
+    this.reset();
   }
 
   /** 直前の手を1手取り消す (issue #28)。取り消し先はアニメーションなしで即座に表示する */
