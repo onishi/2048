@@ -93,49 +93,49 @@
   ],
   "expected": [
     {
-      "empty": 1635,
-      "monotonicity": 3290,
-      "smoothness": -495,
+      "empty": 1705,
+      "monotonicity": 2585,
+      "smoothness": -693,
       "merge": 0,
-      "corner": 2988032,
-      "snake": 68805.59999999999,
-      "total": 3061267.6
+      "corner": 4210688,
+      "snake": 93460.93999999999,
+      "total": 4307745.94
     },
     {
-      "empty": 3270,
-      "monotonicity": 840,
-      "smoothness": -90,
+      "empty": 3410,
+      "monotonicity": 660,
+      "smoothness": -126,
       "merge": 0,
-      "corner": 11672,
-      "snake": 319.2,
-      "total": 16011.2
+      "corner": 16448,
+      "snake": 433.58,
+      "total": 20825.58
     },
     {
-      "empty": 3924,
-      "monotonicity": 560,
-      "smoothness": -90,
+      "empty": 4092,
+      "monotonicity": 440,
+      "smoothness": -126,
       "merge": 0,
-      "corner": 11672,
-      "snake": 316.8,
-      "total": 16382.8
+      "corner": 16448,
+      "snake": 430.32,
+      "total": 21284.32
     },
     {
       "empty": 0,
-      "monotonicity": 700,
-      "smoothness": -930,
-      "merge": 1138,
+      "monotonicity": 550,
+      "smoothness": -1302,
+      "merge": 924,
       "corner": 0,
-      "snake": 25310.399999999998,
-      "total": 26218.399999999998
+      "snake": 34379.96,
+      "total": 34551.96
     },
     {
-      "empty": 5232,
+      "empty": 5456,
       "monotonicity": 0,
       "smoothness": 0,
       "merge": 0,
       "corner": 0,
       "snake": 0,
-      "total": 5232
+      "total": 5456
     }
   ]
 }

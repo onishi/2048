@@ -9,15 +9,16 @@ export interface EvaluationWeights {
 }
 
 /**
- * research/scripts/param_search.py の Random Search (Greedy AI, 60試行) で得た候補を、
- * 実際の Expectimax (depth=2/3) で default と比較検証した上で採用した値 (issue #32)。
- * depth=3, 10ゲームの比較で平均スコア約2.3倍・4096到達率 0%→67% を確認済み。
+ * issue #32 の DEFAULT_WEIGHTS を基準に Random Search (Greedy AI, 200試行, ±50%) で
+ * 得た候補を、本番の Expectimax (depth=3) で計20ゲーム(seed違いで2回に分けて)
+ * 比較検証した上で採用した値。
+ * 平均スコア約+9%（44,049→48,075）、4096到達率 40%→55% を確認済み。
  */
 export const DEFAULT_WEIGHTS: EvaluationWeights = {
-  empty: 327,
-  monotonicity: 70,
-  smoothness: 15,
-  merge: 569,
-  corner: 1459,
-  snake: 1.2,
+  empty: 341,
+  monotonicity: 55,
+  smoothness: 21,
+  merge: 462,
+  corner: 2056,
+  snake: 1.63,
 };
