@@ -189,6 +189,12 @@ body {
   font-weight: 700;
 }
 
+/* ハイスコアを更新した回のみ強調する */
+.score-box .value.new-record {
+  color: var(--accent);
+  animation: new-record 600ms ease;
+}
+
 .board-wrapper {
   position: relative;
 }
@@ -417,9 +423,22 @@ body {
   }
 }
 
+@keyframes new-record {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tile-new,
-  .tile-merged {
+  .tile-merged,
+  .score-box .value.new-record {
     animation: none;
   }
 
