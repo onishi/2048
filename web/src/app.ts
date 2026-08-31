@@ -10,11 +10,12 @@ import { WorkerExpectimaxPlayer } from "./ai/worker-expectimax-player";
 import { DEFAULT_WEIGHTS } from "./ai/weights";
 import { boardSizeOf, DEFAULT_BOARD_SIZE, MAX_BOARD_SIZE, MIN_BOARD_SIZE } from "./game/board";
 import { applyMove, createInitialState, DEFAULT_START_TILE } from "./game/game";
+import { clearHighScores, loadHighScore, recordHighScore } from "./game/high-score";
 import { move } from "./game/move";
 import { loadGameState, saveGameState } from "./game/persistence";
 import { createRandomRng } from "./game/rng";
 import type { Board, Direction, GameState } from "./game/types";
-import { renderBoard, renderMessage, renderScore, type BoardAnimation } from "./ui/board-view";
+import { renderBoard, renderHighScore, renderMessage, renderScore, type BoardAnimation } from "./ui/board-view";
 import { attachControls } from "./ui/controls";
 import { renderAiStats, renderBenchmarkResults, renderComparisonResults, type AiStatsData } from "./ui/stats";
 import { applyTheme, DEFAULT_THEME, loadStoredTheme, THEMES, THEME_LABELS, type Theme } from "./ui/theme";
@@ -57,6 +58,10 @@ const TEMPLATE = `
         <div class="score-box">
           <span class="label">Score</span>
           <span class="value" id="score">0</span>
+        </div>
+        <div class="score-box">
+          <span class="label">Best</span>
+          <span class="value" id="best-score">0</span>
         </div>
         <div class="score-box">
           <span class="label">Max Tile</span>
@@ -133,6 +138,7 @@ const TEMPLATE = `
           </select>
         </label>
         <button id="reset-defaults-button" class="secondary" type="button">Reset to Default</button>
+        <button id="clear-high-score-button" class="secondary" type="button">Clear Best</button>
       </div>
     </details>
     <details class="advanced">
@@ -174,6 +180,7 @@ export class App {
   private readonly rng = createRandomRng();
   private readonly boardEl: HTMLElement;
   private readonly scoreEl: HTMLElement;
+  private readonly bestScoreEl: HTMLElement;
   private readonly maxTileEl: HTMLElement;
   private readonly messageEl: HTMLElement;
   private readonly themeSelectEl: HTMLSelectElement;
@@ -192,9 +199,14 @@ export class App {
   private readonly comparisonResultsEl: HTMLElement;
   private readonly undoButtonEl: HTMLButtonElement;
   private readonly resetDefaultsButtonEl: HTMLButtonElement;
+  private readonly clearHighScoreButtonEl: HTMLButtonElement;
 
   /** Undo 用の手番履歴 (issue #28)。リロードをまたいでは保持しない (issue #24 とはスコープを分ける) */
   private history: GameState[] = [];
+  /** 現在の盤面サイズ・開始タイルにおけるハイスコア */
+  private highScore = 0;
+  /** 現在のゲームでハイスコアを更新したか。Reset / 設定変更でリセットする */
+  private isNewRecord = false;
   private boardSize: number = DEFAULT_BOARD_SIZE;
   private startTile: number = DEFAULT_START_TILE;
   private aiType: AiType = "greedy";
@@ -212,6 +224,7 @@ export class App {
 
     this.boardEl = this.query("#board");
     this.scoreEl = this.query("#score");
+    this.bestScoreEl = this.query("#best-score");
     this.maxTileEl = this.query("#max-tile");
     this.messageEl = this.query("#message");
     this.themeSelectEl = this.query<HTMLSelectElement>("#theme-select");
@@ -230,6 +243,7 @@ export class App {
     this.comparisonResultsEl = this.query("#comparison-results");
     this.undoButtonEl = this.query<HTMLButtonElement>("#undo-button");
     this.resetDefaultsButtonEl = this.query<HTMLButtonElement>("#reset-defaults-button");
+    this.clearHighScoreButtonEl = this.query<HTMLButtonElement>("#clear-high-score-button");
 
     const initialTheme = loadStoredTheme();
     applyTheme(initialTheme);
@@ -248,6 +262,8 @@ export class App {
       this.state = createInitialState(this.rng, this.boardSize, this.startTile);
       saveGameState(this.state);
     }
+    // 復元した場面のスコアが記録を超えている場合もあるため、読み込みと同時に記録も更新する
+    this.updateHighScore();
     this.render();
 
     attachControls(this.boardEl, (direction) => this.handleMove(direction));
@@ -266,6 +282,7 @@ export class App {
     });
     this.query<HTMLButtonElement>("#reset-button").addEventListener("click", () => this.reset());
     this.resetDefaultsButtonEl.addEventListener("click", () => this.resetToDefaults());
+    this.clearHighScoreButtonEl.addEventListener("click", () => this.clearHighScore());
     this.undoButtonEl.addEventListener("click", () => this.undo());
     this.query<HTMLButtonElement>("#ai-move-button").addEventListener("click", () => this.handleAiMove());
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
@@ -570,12 +587,33 @@ export class App {
   private setState(next: GameState): void {
     this.state = next;
     saveGameState(next);
+    this.updateHighScore();
+  }
+
+  /**
+   * 現在のスコアをハイスコアとして記録し、表示用の値を更新する。
+   * ハイスコアは盤面サイズ・開始タイルごとに保持されるため、設定を変えると
+   * その設定の記録へ自動的に切り替わる。
+   */
+  private updateHighScore(): void {
+    const { highScore, isNewRecord } = recordHighScore(this.boardSize, this.startTile, this.state.score);
+    this.highScore = highScore;
+    if (isNewRecord) this.isNewRecord = true;
+  }
+
+  /** 記録済みのハイスコアを消す。現在のゲームのスコアは次に状態が変わった時点で改めて記録される */
+  private clearHighScore(): void {
+    clearHighScores();
+    this.highScore = loadHighScore(this.boardSize, this.startTile);
+    this.isNewRecord = false;
+    this.render();
   }
 
   private reset(): void {
     this.stopAutoPlay();
     this.history = [];
     this.updateUndoButtonState();
+    this.isNewRecord = false;
     this.setState(createInitialState(this.rng, this.boardSize, this.startTile));
     this.aiSuggestionEl.textContent = "";
     this.clearAiStats();
@@ -628,6 +666,7 @@ export class App {
   private render(animation?: BoardAnimation): void {
     renderBoard(this.boardEl, this.state.board, animation, this.state.startTile);
     renderScore(this.scoreEl, this.maxTileEl, this.state);
-    renderMessage(this.messageEl, this.state.gameOver);
+    renderHighScore(this.bestScoreEl, this.highScore, this.isNewRecord);
+    renderMessage(this.messageEl, this.state.gameOver, this.isNewRecord);
   }
 }

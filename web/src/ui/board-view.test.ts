@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { move } from "../game/move";
 import type { Board, Direction } from "../game/types";
-import { calculateTileMotions, renderBoard } from "./board-view";
+import { calculateTileMotions, renderBoard, renderHighScore, renderMessage } from "./board-view";
 
 function boardFromRows(rows: number[][]): Board {
   return rows.flat();
@@ -200,5 +200,54 @@ describe("renderBoard", () => {
     expect(cancel).toHaveBeenCalledTimes(1);
     expect(container.querySelectorAll(".tile-moving")).toHaveLength(0);
     expect(container.querySelectorAll(".tile-hidden")).toHaveLength(0);
+  });
+});
+
+describe("renderHighScore", () => {
+  it("ハイスコアを表示する", () => {
+    const el = document.createElement("span");
+
+    renderHighScore(el, 1234, false);
+
+    expect(el.textContent).toBe("1234");
+    expect(el.classList.contains("new-record")).toBe(false);
+  });
+
+  it("記録更新時は new-record クラスを付け、更新でなくなれば外す", () => {
+    const el = document.createElement("span");
+
+    renderHighScore(el, 1234, true);
+    expect(el.classList.contains("new-record")).toBe(true);
+
+    renderHighScore(el, 1234, false);
+    expect(el.classList.contains("new-record")).toBe(false);
+  });
+});
+
+describe("renderMessage", () => {
+  it("ゲーム継続中は何も表示しない", () => {
+    const el = document.createElement("div");
+
+    renderMessage(el, false);
+
+    expect(el.textContent).toBe("");
+    expect(el.classList.contains("visible")).toBe(false);
+  });
+
+  it("Game Over を表示する", () => {
+    const el = document.createElement("div");
+
+    renderMessage(el, true);
+
+    expect(el.textContent).toBe("Game Over");
+    expect(el.classList.contains("visible")).toBe(true);
+  });
+
+  it("ハイスコアを更新して終わった場合はその旨も表示する", () => {
+    const el = document.createElement("div");
+
+    renderMessage(el, true, true);
+
+    expect(el.textContent).toBe("Game Over — New Best!");
   });
 });

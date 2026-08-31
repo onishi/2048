@@ -215,7 +215,13 @@ export function renderScore(scoreEl: HTMLElement, maxTileEl: HTMLElement, state:
   maxTileEl.textContent = String(Math.max(0, ...state.board));
 }
 
-export function renderMessage(messageEl: HTMLElement, gameOver: boolean): void {
-  messageEl.textContent = gameOver ? "Game Over" : "";
+/** ハイスコアを表示する。今回のプレイで記録を更新した場合は強調表示する */
+export function renderHighScore(bestScoreEl: HTMLElement, highScore: number, isNewRecord: boolean): void {
+  bestScoreEl.textContent = String(highScore);
+  bestScoreEl.classList.toggle("new-record", isNewRecord);
+}
+
+export function renderMessage(messageEl: HTMLElement, gameOver: boolean, isNewRecord = false): void {
+  messageEl.textContent = gameOver ? (isNewRecord ? "Game Over — New Best!" : "Game Over") : "";
   messageEl.classList.toggle("visible", gameOver);
 }
