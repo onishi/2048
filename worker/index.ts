@@ -1,3 +1,5 @@
+import { checkHealth } from "./health";
+
 const LEGACY_HOSTNAME = "2048-ai.wagaya.workers.dev";
 const CANONICAL_HOSTNAME = "2048.wagaya.org";
 
@@ -9,6 +11,10 @@ export function handleRequest(request: Request, env: Env): Response | Promise<Re
     url.hostname = CANONICAL_HOSTNAME;
     url.port = "";
     return Response.redirect(url.toString(), 308);
+  }
+
+  if (url.pathname === "/_monitor/health") {
+    return checkHealth(env);
   }
 
   return env.ASSETS.fetch(request);

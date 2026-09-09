@@ -73,9 +73,9 @@ const TEMPLATE = `
       <div class="board" id="board"></div>
       <div class="message" id="message"></div>
     </div>
-    <div class="ai-bar">
+    <section class="control-panel ai-controls" aria-label="AI controls">
       <label class="ai-select-label">
-        AI:
+        <span>AI</span>
         <select id="ai-select">
           <option value="random">Random</option>
           <option value="greedy" selected>Greedy</option>
@@ -84,7 +84,7 @@ const TEMPLATE = `
         </select>
       </label>
       <label class="ai-select-label">
-        Depth:
+        <span>Depth</span>
         <select id="depth-select">
           ${DEPTH_OPTIONS.map(
             (depth) =>
@@ -93,7 +93,7 @@ const TEMPLATE = `
         </select>
       </label>
       <label class="ai-select-label">
-        Speed:
+        <span>Speed</span>
         <select id="speed-select">
           <option value="slow">Slow</option>
           <option value="normal" selected>Normal</option>
@@ -101,20 +101,24 @@ const TEMPLATE = `
           <option value="maximum">Maximum</option>
         </select>
       </label>
-    </div>
-    <div class="action-bar">
-      <button id="ai-move-button" type="button">AI Move</button>
-      <button id="auto-play-button" type="button">Start AI</button>
-      <button id="undo-button" class="secondary" type="button" disabled>Undo</button>
-      <button id="reset-button" class="secondary" type="button">Reset</button>
+    </section>
+    <div class="action-bar" aria-label="Game actions">
+      <div class="action-group action-group-primary">
+        <button id="auto-play-button" class="primary" type="button">Start AI</button>
+        <button id="ai-move-button" type="button">AI Move</button>
+      </div>
+      <div class="action-group action-group-secondary">
+        <button id="undo-button" class="secondary" type="button" disabled>Undo</button>
+        <button id="reset-button" class="secondary" type="button">Reset</button>
+      </div>
     </div>
     <p class="ai-suggestion" id="ai-suggestion"></p>
     <div class="ai-stats" id="ai-stats"></div>
     <details class="advanced">
       <summary>Game Settings</summary>
-      <div class="ai-bar">
+      <div class="settings-grid">
         <label class="ai-select-label">
-          Size:
+          <span>Size</span>
           <select id="board-size-select">
             ${BOARD_SIZE_OPTIONS.map(
               (size) =>
@@ -123,7 +127,7 @@ const TEMPLATE = `
           </select>
         </label>
         <label class="ai-select-label">
-          Start:
+          <span>Start</span>
           <select id="start-tile-select">
             ${START_TILE_OPTIONS.map(
               ({ value, label }) =>
@@ -132,7 +136,7 @@ const TEMPLATE = `
           </select>
         </label>
         <label class="ai-select-label">
-          Theme:
+          <span>Theme</span>
           <select id="theme-select">
             ${THEMES.map((theme) => `<option value="${theme}">${THEME_LABELS[theme]}</option>`).join("")}
           </select>
@@ -145,11 +149,13 @@ const TEMPLATE = `
       <summary>Benchmark / Compare AIs</summary>
       <div class="benchmark-bar">
         <label class="ai-select-label">
-          Games:
+          <span>Games</span>
           <input id="benchmark-games" type="number" min="1" max="${MAX_BENCHMARK_GAMES}" value="10" />
         </label>
-        <button id="benchmark-button" type="button">Run Benchmark</button>
-        <button id="comparison-button" type="button">Compare All AIs</button>
+        <div class="benchmark-actions">
+          <button id="benchmark-button" type="button">Run Benchmark</button>
+          <button id="comparison-button" class="secondary" type="button">Compare AIs</button>
+        </div>
       </div>
       <pre class="benchmark-results" id="benchmark-results"></pre>
       <div class="comparison-results" id="comparison-results"></div>

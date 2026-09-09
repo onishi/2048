@@ -313,6 +313,8 @@ AI がなぜその手を選んだかある程度見える。
 - [x] **可視化** — `web/src/ui/stats.ts` の `renderComparisonResults()`
   - AI / Version / Avg Score / Best Score / Avg Moves / Best Tile を並べたテーブルで表示する
   - ブラウザ実測（Depth 2, 3 games）: Random 524 < Neural 2,448 < Greedy 10,641 < Expectimax 17,856（平均スコア）
+- [x] **操作 UI の整理** — `web/src/app.ts`, `web/src/style.css`
+  - ゲーム中の主要操作・補助操作・設定・分析をグループ化し、ボタンが増えても優先順位が伝わるレスポンシブな配置にする
 
 ### 完了条件
 複数 AI を同一画面で比較できる。
