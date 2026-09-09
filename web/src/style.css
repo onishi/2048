@@ -645,6 +645,25 @@ summary:focus-visible {
   font-weight: 700;
 }
 
+.game-footer {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+.game-footer a {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-underline-offset: 3px;
+  opacity: 0.78;
+}
+
+.game-footer a:hover {
+  color: var(--accent);
+  opacity: 1;
+}
+
 @media (max-width: 480px), (max-height: 700px) {
   body {
     align-items: flex-start;
