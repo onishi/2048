@@ -160,6 +160,9 @@ const TEMPLATE = `
       <pre class="benchmark-results" id="benchmark-results"></pre>
       <div class="comparison-results" id="comparison-results"></div>
     </details>
+    <nav class="game-footer" aria-label="Help">
+      <a href="/help/">How to Play</a>
+    </nav>
   </div>
 `;
 

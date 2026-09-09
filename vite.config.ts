@@ -5,6 +5,9 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    rollupOptions: {
+      input: ["web/index.html", "web/help/index.html"],
+    },
   },
   // onnxruntime-web は内部で import.meta.url を使って wasm バイナリを解決する。
   // esbuild による dep pre-bundling を通すとその解決が壊れ、dev サーバーで

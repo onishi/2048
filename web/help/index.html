@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="2048 AIの遊び方とAI・各種設定の使い方" />
+    <title>遊び方 | 2048 AI</title>
+  </head>
+  <body class="help-body">
+    <main class="help-page">
+      <header class="help-header">
+        <a class="back-link" href="/">← ゲームに戻る</a>
+        <p class="eyebrow">2048 AI Guide</p>
+        <h1>遊び方</h1>
+        <p class="help-lead">数字を重ねて2048を目指しながら、4種類のAIの考え方や強さを試せます。</p>
+      </header>
+
+      <nav class="help-nav" aria-label="ページ内メニュー">
+        <a href="#basics">基本操作</a>
+        <a href="#ai-play">AIで遊ぶ</a>
+        <a href="#settings">設定</a>
+        <a href="#benchmark">分析</a>
+      </nav>
+
+      <section class="help-section" id="basics">
+        <div class="section-number">01</div>
+        <div>
+          <h2>基本操作</h2>
+          <p>同じ数字のタイルを重ねると、2つが合体してスコアが増えます。動かせる場所がなくなるまでに2048のタイルを作りましょう。</p>
+          <ul>
+            <li><strong>PC:</strong> 矢印キーで盤面を上下左右に動かします。</li>
+            <li><strong>スマートフォン:</strong> 盤面を動かしたい方向へスワイプします。</li>
+            <li><strong>Undo:</strong> 直前の手を取り消します。</li>
+            <li><strong>Reset:</strong> 現在の設定で新しいゲームを始めます。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="help-section" id="ai-play">
+        <div class="section-number">02</div>
+        <div>
+          <h2>AIで遊ぶ</h2>
+          <p><strong>AI Move</strong> はAIが選んだ次の1手だけを実行し、判断材料も表示します。<strong>Start AI</strong> はゲーム終了まで自動で進め、もう一度押すと一時停止します。</p>
+          <div class="ai-guide-grid">
+            <article><h3>Random</h3><p>有効な手からランダムに選びます。比較の基準に向いています。</p></article>
+            <article><h3>Greedy</h3><p>次の盤面が最も良くなる1手を選ぶ、軽快なAIです。</p></article>
+            <article><h3>Expectimax</h3><p>先の展開と新しいタイルの出現確率を読んで選びます。</p></article>
+            <article><h3>Neural</h3><p>学習済みモデルで素早く判断します。4×4・開始タイル2専用です。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="help-section" id="settings">
+        <div class="section-number">03</div>
+        <div>
+          <h2>AIとゲームの設定</h2>
+          <dl class="setting-list">
+            <div><dt>Depth</dt><dd>Expectimaxが何手先まで読むかを設定します。大きいほど強くなる可能性がありますが、計算時間も増えます。迷ったらAutoがおすすめです。</dd></div>
+            <div><dt>Speed</dt><dd>自動プレイの速度です。Maximumではアニメーションを省略して最速で進めます。</dd></div>
+            <div><dt>Size / Start</dt><dd>盤面サイズと開始タイルを変更します。変更すると新しいゲームが始まります。</dd></div>
+            <div><dt>Theme</dt><dd>Classic、Sci-Fi、Natureから見た目を選べます。選択は次回も引き継がれます。</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="help-section" id="benchmark">
+        <div class="section-number">04</div>
+        <div>
+          <h2>AIを分析する</h2>
+          <p><strong>Benchmark / Compare AIs</strong> を開き、試行回数を指定して実行します。</p>
+          <ul>
+            <li><strong>Run Benchmark:</strong> 現在選択中のAIを複数回走らせ、平均スコアや最高タイルを集計します。</li>
+            <li><strong>Compare AIs:</strong> 利用可能なAIを同じ条件で走らせ、結果を一覧で比較します。</li>
+          </ul>
+          <p class="help-note">試行回数やDepthが大きいほど完了まで時間がかかります。まずは少ない回数で試すのがおすすめです。</p>
+        </div>
+      </section>
+
+      <a class="play-link" href="/">ゲームを始める</a>
+    </main>
+    <script type="module" src="/src/help.ts"></script>
+  </body>
+</html>
