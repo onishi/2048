@@ -1,10 +1,28 @@
 import { describe, expect, it } from "vitest";
+import { getValidMoves } from "../game/move";
 import { createRng } from "../game/rng";
+import type { Board, Direction } from "../game/types";
 import { GreedyPlayer } from "./greedy-player";
 import { RandomPlayer } from "./random-player";
 import { runBenchmark } from "./benchmark";
 
 describe("runBenchmark — SPEC.md #14.4", () => {
+  it("選択方向へ動けない場合はゲームオーバーでなくても終了する", async () => {
+    const summary = await runBenchmark({
+      games: 1,
+      createPlayer: () => ({
+        async chooseMove(board: Board): Promise<Direction> {
+          const validMoves = getValidMoves(board);
+          return (["up", "right", "down", "left"] as const).find((direction) => !validMoves.includes(direction))!;
+        },
+      }),
+      seedBase: 1,
+      maxMoves: 10,
+    });
+
+    expect(summary.results[0].moveCount).toBeLessThan(10);
+  });
+
   it("指定したゲーム数だけ実行し、集計結果を返す", async () => {
     const summary = await runBenchmark({
       games: 5,

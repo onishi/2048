@@ -1,5 +1,6 @@
 import { runBenchmark } from "./ai/benchmark";
 import { runComparison } from "./ai/comparison";
+import { RotatePlayer, VerticalPlayer } from "./ai/cycling-player";
 import { evaluateWithBreakdown } from "./ai/evaluator";
 import { AI_TYPES, type AiType } from "./ai/player-types";
 import { DEFAULT_DEPTH, DYNAMIC_DEPTH, type DepthSetting } from "./ai/expectimax-player";
@@ -78,6 +79,8 @@ const TEMPLATE = `
         <span>AI</span>
         <select id="ai-select">
           <option value="random">Random</option>
+          <option value="rotate">Rotate</option>
+          <option value="vertical">Vertical</option>
           <option value="greedy" selected>Greedy</option>
           <option value="expectimax">Expectimax</option>
           <option value="neural">Neural</option>
@@ -220,6 +223,7 @@ export class App {
   private boardSize: number = DEFAULT_BOARD_SIZE;
   private startTile: number = DEFAULT_START_TILE;
   private aiType: AiType = "greedy";
+  private activePlayer: Player | null = null;
   private depth: DepthSetting = DEFAULT_DEPTH;
   private autoPlaySpeed: AutoPlaySpeed = "normal";
   private autoPlayRunning = false;
@@ -300,11 +304,13 @@ export class App {
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
     this.aiSelectEl.addEventListener("change", () => {
       this.aiType = this.aiSelectEl.value as AiType;
+      this.activePlayer = null;
       this.clearAiStats();
     });
     this.depthSelectEl.addEventListener("change", () => {
       this.depth =
         this.depthSelectEl.value === DYNAMIC_DEPTH ? DYNAMIC_DEPTH : Number(this.depthSelectEl.value);
+      this.activePlayer = null;
       this.clearAiStats();
     });
     this.speedSelectEl.addEventListener("change", () => {
@@ -328,16 +334,31 @@ export class App {
   }
 
   private createPlayer(): Player {
+    if (this.activePlayer) return this.activePlayer;
+
+    let player: Player;
     switch (this.aiType) {
       case "random":
-        return new RandomPlayer(this.rng);
+        player = new RandomPlayer(this.rng);
+        break;
+      case "rotate":
+        player = new RotatePlayer();
+        break;
+      case "vertical":
+        player = new VerticalPlayer();
+        break;
       case "expectimax":
-        return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth, this.startTile);
+        player = new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth, this.startTile);
+        break;
       case "neural":
-        return new LazyNeuralPlayer();
+        player = new LazyNeuralPlayer();
+        break;
       case "greedy":
-        return new GreedyPlayer();
+        player = new GreedyPlayer();
+        break;
     }
+    this.activePlayer = player;
+    return player;
   }
 
   private clearAiStats(): void {
@@ -378,6 +399,10 @@ export class App {
     switch (aiType) {
       case "random":
         return new RandomPlayer(createRandomRng());
+      case "rotate":
+        return new RotatePlayer();
+      case "vertical":
+        return new VerticalPlayer();
       case "expectimax":
         if (!workerClient) throw new Error("workerClient is required for Expectimax");
         return new WorkerExpectimaxPlayer(workerClient, this.depth, this.startTile);
@@ -535,6 +560,10 @@ export class App {
         this.clearAiStats();
       }
 
+      if (!move(board, direction).moved) {
+        this.aiSuggestionEl.textContent = `AI stopped: ${direction.toUpperCase()} is blocked`;
+        return;
+      }
       this.applyDirection(direction, MOVE_ANIMATION_DURATION_MS);
       this.aiSuggestionEl.textContent = `AI moved: ${direction.toUpperCase()}`;
     } catch {
@@ -600,6 +629,11 @@ export class App {
       .then((direction) => {
         // Pause 中に届いた古い結果は無視する (SPEC.md #13.2)
         if (!this.autoPlayRunning) return;
+        if (!move(board, direction).moved) {
+          this.aiSuggestionEl.textContent = `AI stopped: ${direction.toUpperCase()} is blocked`;
+          this.stopAutoPlay();
+          return;
+        }
         const animationDurationMs =
           this.autoPlaySpeed === "maximum"
             ? null
@@ -641,6 +675,7 @@ export class App {
 
   private reset(): void {
     this.stopAutoPlay();
+    this.activePlayer = null;
     this.history = [];
     this.updateUndoButtonState();
     this.isNewRecord = false;

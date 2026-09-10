@@ -12,7 +12,7 @@
         <a class="back-link" href="/">← ゲームに戻る</a>
         <p class="eyebrow">2048 AI Guide</p>
         <h1>遊び方</h1>
-        <p class="help-lead">数字を重ねて2048を目指しながら、4種類のAIの考え方や強さを試せます。</p>
+        <p class="help-lead">数字を重ねて2048を目指しながら、さまざまなAIの動きや強さを試せます。</p>
       </header>
 
       <nav class="help-nav" aria-label="ページ内メニュー">
@@ -43,6 +43,8 @@
           <p><strong>AI Move</strong> はAIが選んだ次の1手だけを実行し、判断材料も表示します。<strong>Start AI</strong> はゲーム終了まで自動で進め、もう一度押すと一時停止します。</p>
           <div class="ai-guide-grid">
             <article><h3>Random</h3><p>有効な手からランダムに選びます。比較の基準に向いています。</p></article>
+            <article><h3>Rotate</h3><p>上・右・下・左の順に動き、次の方向へ動けなくなった時点で止まります。</p></article>
+            <article><h3>Vertical</h3><p>上・下の順に動き、次の方向へ動けなくなった時点で止まります。</p></article>
             <article><h3>Greedy</h3><p>次の盤面が最も良くなる1手を選ぶ、軽快なAIです。</p></article>
             <article><h3>Expectimax</h3><p>先の展開と新しいタイルの出現確率を読んで選びます。</p></article>
             <article><h3>Neural</h3><p>学習済みモデルで素早く判断します。4×4・開始タイル2専用です。</p></article>
