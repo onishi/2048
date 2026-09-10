@@ -1,0 +1,23 @@
+{
+  "name": "2048 AI",
+  "short_name": "2048 AI",
+  "description": "AIと遊び、思考を比較できる2048ゲーム",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf8ef",
+  "theme_color": "#faf8ef",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
