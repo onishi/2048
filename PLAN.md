@@ -320,7 +320,7 @@ AI がなぜその手を選んだかある程度見える。
 - [x] **ヘルプページ** — `web/help/index.html`, `web/src/help.ts`
   - 基本操作、AI の種類、探索設定、ゲーム設定、ベンチマークの使い方を説明し、ゲーム画面からリンクする
 - [x] **アプリアイコン** — `web/public/icons/`, `web/public/site.webmanifest`
-  - favicon、Apple Touch Icon、PWA用アイコンを設定する
+  - 32px / 64px / 128px favicon、Apple Touch Icon、PWA用アイコンを設定する
 
 ### 完了条件
 複数 AI を同一画面で比較できる。
