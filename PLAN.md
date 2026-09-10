@@ -319,6 +319,8 @@ AI がなぜその手を選んだかある程度見える。
   - ゲーム中の主要操作・補助操作・設定・分析をグループ化し、ボタンが増えても優先順位が伝わるレスポンシブな配置にする
 - [x] **ヘルプページ** — `web/help/index.html`, `web/src/help.ts`
   - 基本操作、AI の種類、探索設定、ゲーム設定、ベンチマークの使い方を説明し、ゲーム画面からリンクする
+- [x] **アプリアイコン** — `web/public/icons/`, `web/public/site.webmanifest`
+  - favicon、Apple Touch Icon、PWA用アイコンを設定する
 
 ### 完了条件
 複数 AI を同一画面で比較できる。
