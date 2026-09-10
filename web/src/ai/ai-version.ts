@@ -7,6 +7,8 @@ import type { AiType } from "./player-types";
  */
 export const AI_VERSIONS: Record<AiType, string> = {
   random: "random-v1",
+  rotate: "rotate-v1",
+  vertical: "vertical-v1",
   greedy: "greedy-v1",
   expectimax: "expectimax-v1",
   neural: "neural-v1",

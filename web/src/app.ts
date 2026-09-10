@@ -1,5 +1,6 @@
 import { runBenchmark } from "./ai/benchmark";
 import { runComparison } from "./ai/comparison";
+import { RotatePlayer, VerticalPlayer } from "./ai/cycling-player";
 import { evaluateWithBreakdown } from "./ai/evaluator";
 import { AI_TYPES, type AiType } from "./ai/player-types";
 import { DEFAULT_DEPTH, DYNAMIC_DEPTH, type DepthSetting } from "./ai/expectimax-player";
@@ -78,6 +79,8 @@ const TEMPLATE = `
         <span>AI</span>
         <select id="ai-select">
           <option value="random">Random</option>
+          <option value="rotate">Rotate</option>
+          <option value="vertical">Vertical</option>
           <option value="greedy" selected>Greedy</option>
           <option value="expectimax">Expectimax</option>
           <option value="neural">Neural</option>
@@ -200,6 +203,7 @@ export class App {
   private readonly speedSelectEl: HTMLSelectElement;
   private readonly aiSuggestionEl: HTMLElement;
   private readonly aiStatsEl: HTMLElement;
+  private readonly aiMoveButtonEl: HTMLButtonElement;
   private readonly autoPlayButtonEl: HTMLButtonElement;
   private readonly benchmarkGamesEl: HTMLInputElement;
   private readonly benchmarkButtonEl: HTMLButtonElement;
@@ -219,9 +223,11 @@ export class App {
   private boardSize: number = DEFAULT_BOARD_SIZE;
   private startTile: number = DEFAULT_START_TILE;
   private aiType: AiType = "greedy";
+  private activePlayer: Player | null = null;
   private depth: DepthSetting = DEFAULT_DEPTH;
   private autoPlaySpeed: AutoPlaySpeed = "normal";
   private autoPlayRunning = false;
+  private aiMoveRunning = false;
   private autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
   private benchmarkRunning = false;
   private comparisonRunning = false;
@@ -244,6 +250,7 @@ export class App {
     this.speedSelectEl = this.query<HTMLSelectElement>("#speed-select");
     this.aiSuggestionEl = this.query("#ai-suggestion");
     this.aiStatsEl = this.query("#ai-stats");
+    this.aiMoveButtonEl = this.query<HTMLButtonElement>("#ai-move-button");
     this.autoPlayButtonEl = this.query<HTMLButtonElement>("#auto-play-button");
     this.benchmarkGamesEl = this.query<HTMLInputElement>("#benchmark-games");
     this.benchmarkButtonEl = this.query<HTMLButtonElement>("#benchmark-button");
@@ -293,15 +300,17 @@ export class App {
     this.resetDefaultsButtonEl.addEventListener("click", () => this.resetToDefaults());
     this.clearHighScoreButtonEl.addEventListener("click", () => this.clearHighScore());
     this.undoButtonEl.addEventListener("click", () => this.undo());
-    this.query<HTMLButtonElement>("#ai-move-button").addEventListener("click", () => this.handleAiMove());
+    this.aiMoveButtonEl.addEventListener("click", () => this.handleAiMove());
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
     this.aiSelectEl.addEventListener("change", () => {
       this.aiType = this.aiSelectEl.value as AiType;
+      this.activePlayer = null;
       this.clearAiStats();
     });
     this.depthSelectEl.addEventListener("change", () => {
       this.depth =
         this.depthSelectEl.value === DYNAMIC_DEPTH ? DYNAMIC_DEPTH : Number(this.depthSelectEl.value);
+      this.activePlayer = null;
       this.clearAiStats();
     });
     this.speedSelectEl.addEventListener("change", () => {
@@ -325,16 +334,31 @@ export class App {
   }
 
   private createPlayer(): Player {
+    if (this.activePlayer) return this.activePlayer;
+
+    let player: Player;
     switch (this.aiType) {
       case "random":
-        return new RandomPlayer(this.rng);
+        player = new RandomPlayer(this.rng);
+        break;
+      case "rotate":
+        player = new RotatePlayer();
+        break;
+      case "vertical":
+        player = new VerticalPlayer();
+        break;
       case "expectimax":
-        return new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth, this.startTile);
+        player = new WorkerExpectimaxPlayer(this.getAiWorkerClient(), this.depth, this.startTile);
+        break;
       case "neural":
-        return new LazyNeuralPlayer();
+        player = new LazyNeuralPlayer();
+        break;
       case "greedy":
-        return new GreedyPlayer();
+        player = new GreedyPlayer();
+        break;
     }
+    this.activePlayer = player;
+    return player;
   }
 
   private clearAiStats(): void {
@@ -375,6 +399,10 @@ export class App {
     switch (aiType) {
       case "random":
         return new RandomPlayer(createRandomRng());
+      case "rotate":
+        return new RotatePlayer();
+      case "vertical":
+        return new VerticalPlayer();
       case "expectimax":
         if (!workerClient) throw new Error("workerClient is required for Expectimax");
         return new WorkerExpectimaxPlayer(workerClient, this.depth, this.startTile);
@@ -394,7 +422,7 @@ export class App {
 
   private setGameplayControlsDisabled(disabled: boolean): void {
     this.autoPlayButtonEl.disabled = disabled;
-    this.query<HTMLButtonElement>("#ai-move-button").disabled = disabled;
+    this.aiMoveButtonEl.disabled = disabled;
     this.updateUndoButtonState();
   }
 
@@ -508,22 +536,44 @@ export class App {
   }
 
   private async handleAiMove(): Promise<void> {
-    if (this.state.gameOver) return;
+    if (this.state.gameOver || this.aiMoveRunning || this.autoPlayRunning || this.benchmarkRunning || this.comparisonRunning) {
+      return;
+    }
+
+    const board = this.state.board;
     const player = this.createPlayer();
+    this.aiMoveRunning = true;
+    this.setGameplayControlsDisabled(true);
+    this.setBenchmarkControlsDisabled(true);
 
     try {
+      let direction: Direction;
+
       if (player instanceof WorkerExpectimaxPlayer) {
-        const result = await player.evaluateBoard(this.state.board);
-        this.aiSuggestionEl.textContent = `AI recommends: ${result.direction.toUpperCase()}`;
-        renderAiStats(this.aiStatsEl, this.buildStatsData(this.state.board, result));
-        return;
+        const result = await player.evaluateBoard(board);
+        direction = result.direction;
+        if (this.state.board !== board) return;
+        renderAiStats(this.aiStatsEl, this.buildStatsData(board, result));
+      } else {
+        direction = await player.chooseMove(board);
+        if (this.state.board !== board) return;
+        this.clearAiStats();
       }
 
-      const direction = await player.chooseMove(this.state.board);
-      this.aiSuggestionEl.textContent = `AI recommends: ${direction.toUpperCase()}`;
-      this.clearAiStats();
+      if (!move(board, direction).moved) {
+        this.aiSuggestionEl.textContent = `AI stopped: ${direction.toUpperCase()} is blocked`;
+        return;
+      }
+      this.applyDirection(direction, MOVE_ANIMATION_DURATION_MS);
+      this.aiSuggestionEl.textContent = `AI moved: ${direction.toUpperCase()}`;
     } catch {
       // Reset 等で Worker がキャンセルされた場合は何もしない (SPEC.md #13.2)
+    } finally {
+      this.aiMoveRunning = false;
+      if (!this.autoPlayRunning && !this.benchmarkRunning && !this.comparisonRunning) {
+        this.setGameplayControlsDisabled(false);
+        this.setBenchmarkControlsDisabled(false);
+      }
     }
   }
 
@@ -579,6 +629,11 @@ export class App {
       .then((direction) => {
         // Pause 中に届いた古い結果は無視する (SPEC.md #13.2)
         if (!this.autoPlayRunning) return;
+        if (!move(board, direction).moved) {
+          this.aiSuggestionEl.textContent = `AI stopped: ${direction.toUpperCase()} is blocked`;
+          this.stopAutoPlay();
+          return;
+        }
         const animationDurationMs =
           this.autoPlaySpeed === "maximum"
             ? null
@@ -620,6 +675,7 @@ export class App {
 
   private reset(): void {
     this.stopAutoPlay();
+    this.activePlayer = null;
     this.history = [];
     this.updateUndoButtonState();
     this.isNewRecord = false;

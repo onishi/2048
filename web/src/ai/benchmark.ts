@@ -84,7 +84,11 @@ export async function runBenchmark(options: RunBenchmarkOptions): Promise<Benchm
 
     while (!state.gameOver && state.moveCount < maxMoves) {
       const direction = await player.chooseMove(state.board);
-      state = applyMove(state, direction, rng);
+      const nextState = applyMove(state, direction, rng);
+      // 指定方向へ動けない場合は、ゲームオーバーでなくてもその場で終了する。
+      // 任意の Player が無効な手を返した場合の無限ループも防ぐ。
+      if (nextState === state) break;
+      state = nextState;
       if (state.moveCount % moveProgressEvery === 0) {
         onMoveProgress?.(i, state.moveCount);
       }
