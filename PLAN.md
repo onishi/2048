@@ -85,7 +85,7 @@
   - 1手先の `getValidMoves` を評価し、最大評価値の手を返す（`SPEC.md #11.4`）
 - [x] **UI 統合**
   - AI 選択 UI（Random / Greedy の切り替え）
-  - 「AI Move」ボタン: 現在の盤面に対する提案手を1つ表示する（`SPEC.md #8.2` の表示イメージ）
+  - 「AI Move」ボタン: 現在の盤面に対して AI が選んだ手を1つ実行し、選択方向を表示する（`SPEC.md #8.2` の表示イメージ）
   - Auto Play の骨組み（Start / Pause / Reset）。この時点ではメインスレッドで実行してよい（Worker 化は Phase 4）
 - [x] **テスト**
   - Random AI が常に有効な手のみ選ぶことを確認するテスト

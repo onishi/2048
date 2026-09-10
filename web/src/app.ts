@@ -200,6 +200,7 @@ export class App {
   private readonly speedSelectEl: HTMLSelectElement;
   private readonly aiSuggestionEl: HTMLElement;
   private readonly aiStatsEl: HTMLElement;
+  private readonly aiMoveButtonEl: HTMLButtonElement;
   private readonly autoPlayButtonEl: HTMLButtonElement;
   private readonly benchmarkGamesEl: HTMLInputElement;
   private readonly benchmarkButtonEl: HTMLButtonElement;
@@ -222,6 +223,7 @@ export class App {
   private depth: DepthSetting = DEFAULT_DEPTH;
   private autoPlaySpeed: AutoPlaySpeed = "normal";
   private autoPlayRunning = false;
+  private aiMoveRunning = false;
   private autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
   private benchmarkRunning = false;
   private comparisonRunning = false;
@@ -244,6 +246,7 @@ export class App {
     this.speedSelectEl = this.query<HTMLSelectElement>("#speed-select");
     this.aiSuggestionEl = this.query("#ai-suggestion");
     this.aiStatsEl = this.query("#ai-stats");
+    this.aiMoveButtonEl = this.query<HTMLButtonElement>("#ai-move-button");
     this.autoPlayButtonEl = this.query<HTMLButtonElement>("#auto-play-button");
     this.benchmarkGamesEl = this.query<HTMLInputElement>("#benchmark-games");
     this.benchmarkButtonEl = this.query<HTMLButtonElement>("#benchmark-button");
@@ -293,7 +296,7 @@ export class App {
     this.resetDefaultsButtonEl.addEventListener("click", () => this.resetToDefaults());
     this.clearHighScoreButtonEl.addEventListener("click", () => this.clearHighScore());
     this.undoButtonEl.addEventListener("click", () => this.undo());
-    this.query<HTMLButtonElement>("#ai-move-button").addEventListener("click", () => this.handleAiMove());
+    this.aiMoveButtonEl.addEventListener("click", () => this.handleAiMove());
     this.autoPlayButtonEl.addEventListener("click", () => this.toggleAutoPlay());
     this.aiSelectEl.addEventListener("change", () => {
       this.aiType = this.aiSelectEl.value as AiType;
@@ -394,7 +397,7 @@ export class App {
 
   private setGameplayControlsDisabled(disabled: boolean): void {
     this.autoPlayButtonEl.disabled = disabled;
-    this.query<HTMLButtonElement>("#ai-move-button").disabled = disabled;
+    this.aiMoveButtonEl.disabled = disabled;
     this.updateUndoButtonState();
   }
 
@@ -508,22 +511,40 @@ export class App {
   }
 
   private async handleAiMove(): Promise<void> {
-    if (this.state.gameOver) return;
+    if (this.state.gameOver || this.aiMoveRunning || this.autoPlayRunning || this.benchmarkRunning || this.comparisonRunning) {
+      return;
+    }
+
+    const board = this.state.board;
     const player = this.createPlayer();
+    this.aiMoveRunning = true;
+    this.setGameplayControlsDisabled(true);
+    this.setBenchmarkControlsDisabled(true);
 
     try {
+      let direction: Direction;
+
       if (player instanceof WorkerExpectimaxPlayer) {
-        const result = await player.evaluateBoard(this.state.board);
-        this.aiSuggestionEl.textContent = `AI recommends: ${result.direction.toUpperCase()}`;
-        renderAiStats(this.aiStatsEl, this.buildStatsData(this.state.board, result));
-        return;
+        const result = await player.evaluateBoard(board);
+        direction = result.direction;
+        if (this.state.board !== board) return;
+        renderAiStats(this.aiStatsEl, this.buildStatsData(board, result));
+      } else {
+        direction = await player.chooseMove(board);
+        if (this.state.board !== board) return;
+        this.clearAiStats();
       }
 
-      const direction = await player.chooseMove(this.state.board);
-      this.aiSuggestionEl.textContent = `AI recommends: ${direction.toUpperCase()}`;
-      this.clearAiStats();
+      this.applyDirection(direction, MOVE_ANIMATION_DURATION_MS);
+      this.aiSuggestionEl.textContent = `AI moved: ${direction.toUpperCase()}`;
     } catch {
       // Reset 等で Worker がキャンセルされた場合は何もしない (SPEC.md #13.2)
+    } finally {
+      this.aiMoveRunning = false;
+      if (!this.autoPlayRunning && !this.benchmarkRunning && !this.comparisonRunning) {
+        this.setGameplayControlsDisabled(false);
+        this.setBenchmarkControlsDisabled(false);
+      }
     }
   }
 
