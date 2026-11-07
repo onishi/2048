@@ -9,6 +9,7 @@
     "head_sampling_rate": 1
   },
   "workers_dev": true,
+  "preview_urls": false,
   "routes": [
     { "pattern": "2048.wagaya.org", "custom_domain": true }
   ],

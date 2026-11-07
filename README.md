@@ -53,6 +53,8 @@ Worker スクリプトは、旧 URL `https://2048-ai.wagaya.workers.dev/` への
 
 デプロイすると `2048.wagaya.org` の Custom Domain と DNS が Cloudflare により管理される。
 
+公開 URL は Cloudflare Access で守っていて、許可したアカウントでログインした人だけが開ける（設定は [playroom](https://github.com/onishi/playroom) にまとめてある）。ただし monitor.wagaya.org から叩く `/_monitor/health` だけは Access を素通りさせている。旧 URL の `workers.dev` はリダイレクトしか返さないので開けたままにし、プレビュー URL は `wrangler.jsonc` の `preview_urls: false` で閉じている。
+
 ### GitHub Actions による自動デプロイ
 
 `.github/workflows/deploy.yml` により、`main` への push と手動実行時にテスト・型チェック・本番ビルドを行い、成功した場合のみ Cloudflare Workers へデプロイする。
